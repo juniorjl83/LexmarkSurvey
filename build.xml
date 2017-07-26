@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!--
+  ** Bundle build file.  For more information, see the SDK
+  ** example build file: tools/example_bundle_build.xml
+  -->
+<project name="survey2" default="all">
+	<!-- Comma sepparated list of a bundles implementation code.
+        Don't need for library or api only bundles.
+        Imports and activator class can be generated from this pattern. -->
+	<property name="impl.pattern" value="com/juniorjl83/lexmark/**" />
+
+	<!-- Comma sepparated list of a bundles public api code.
+        Don't need for library or non api bundles
+        Exports can be generated from this pattern. -->
+	<!-- property name="api.pattern" value="..." / -->
+
+	<property name="bundle.description" value="eSF Survey 2" />
+	<property name="bundle.version" value="0.1.0" />
+	<property name="app.isapp" value="true" />
+	<property name="bundle.baseresource" value="Resources" />
+
+
+	<!-- Maximum memory, in bytes, this bundle should use.  Increase if necessary. -->
+	<property name="bundle.memory" value="524288" />
+
+	<property name="app.settings" value="Settings.xml" />
+	<property name="app.hasRequiredValidator" value="true" />
+	<property name="bundle.activator" value="com.juniorjl83.lexmark.Activator" />
+
+
+	<!-- classpath for bundles.  Only needed if jars are included in bundle. -->
+	<property name="bundle.classpath" value="." />
+
+	<property name="bundle.metadata" value="Metadata.xml" />
+
+	<!-- This ensures the bundle compiles against the correct set of libraries -->
+	<property name="framework.compile.version" value="fw4" />
+
+
+	<property name="app.icon" value="survey-icon1.png" />
+	<!-- Following property will pick all the settings for LES_SDK environment
+   variable as mentioned in installation guide -->
+	<property environment="sysprops" />
+	<import file="${sysprops.LES_SDK}/tools/bundlebuild_import.xml" />
+
+	<!-- The following build path can be used to include component bundles
+        in the flash file. -->
+
+	<path id="flash.components">
+		<fileset dir="${sysprops.LES_SDK}/components" includes="smbclientservice-component.jar" />
+	</path>
+
+
+</project>

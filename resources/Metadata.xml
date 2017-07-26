@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE bundle PUBLIC "-//LES//Service Binder 1.0//EN" "file:./metadata.dtd">
+
+<!-- For more information on Service Binder, see the documentation: http://gravity.sourceforge.net/servicebinder/ 
+	$ packageName = com.juniorjl83.lexmark -->
+
+<bundle>
+	<!-- For each "component" in the bundle that requires or provides services, 
+		a "component" section should exist and specify the class that implements 
+		the component. -->
+	<component class="com.juniorjl83.lexmark.SurveyProfile">
+		<property name="service.pid" type="string" value="survey2" />
+		<requires service="com.lexmark.prtapp.settings.SettingsAdmin"
+			filter="" cardinality="1..1" policy="dynamic" bind-method="addSettingsAdmin"
+			unbind-method="removeSettingsAdmin" />
+		<requires service="com.lexmark.prtapp.smbclient.SmbClientService"
+			filter="" cardinality="1..1" policy="dynamic" bind-method="addSmbClientService"
+			unbind-method="removeSmbClientService" />
+		<provides service="org.osgi.service.cm.ManagedService" />
+		<provides service="com.lexmark.prtapp.settings.RequiredSettingValidator" />
+	</component>
+
+
+</bundle>
