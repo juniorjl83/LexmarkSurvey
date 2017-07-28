@@ -39,6 +39,8 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
    private String iconText = null;
    boolean activated = false;
    private ServiceRegistration profileRegistration = null;
+   private static final String CARRIAGE_RETURN = System
+         .getProperty("line.separator");;
    // private SurveyProfileService _surveyprofileservice = null;
 
    /**
@@ -152,13 +154,88 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
    {
       Activator.getLog().info("Pid is " + pid);
       Messages messages = new Messages(locale, getClass().getClassLoader());
-
+      String msg = "";
       // entra a configurar encuestas
       if (!pid.equals("survey2"))
       {
+         boolean isError = false;
+         boolean isValidBeginDate = false;
+         boolean isValidEndDate = false;
 
+         String beginDate = (String) settings.get("settings.instanceBegin");
+         Activator.getLog()
+               .info("begin date validation: " + Util.isValidDate(beginDate));
+         if (!Util.isEmpty(beginDate))
+         {
+            if (!Util.isValidDate(beginDate))
+            {
+               Activator.getLog().info("entra if beginDate ");
+               msg += messages.getString("setting.error.beginDate");
+               msg += CARRIAGE_RETURN;
+               isError = true;
+            }
+            else
+            {
+               Activator.getLog().info("entra else beginDate ");
+               isValidBeginDate = true;
+            }
+         }
+
+         String endDate = (String) settings.get("settings.instanceEnd");
+         Activator.getLog()
+               .info("end date validation: " + Util.isValidDate(endDate));
+         if (!Util.isEmpty(endDate))
+         {
+            if (!Util.isValidDate(endDate))
+            {
+               Activator.getLog().info("entra if endDate ");
+               msg += messages.getString("setting.error.endDate");
+               msg += CARRIAGE_RETURN;
+               isError = true;
+            }
+            else
+            {
+               Activator.getLog().info("entra else endDate ");
+               isValidEndDate = true;
+            }
+         }
+
+         if ((Util.isEmpty(beginDate) && !Util.isEmpty(endDate))
+               || (!Util.isEmpty(beginDate) && Util.isEmpty(endDate)))
+         {
+            Activator.getLog().info("entra if bothDates ");
+            msg += messages.getString("setting.error.bothDatesmustFill");
+            msg += CARRIAGE_RETURN;
+            isError = true;
+         }
+
+         if (isValidBeginDate && isValidEndDate)
+         {
+            Activator.getLog().info("entra if both dates valid ");
+            String dateValidation = Util.dateValidation(beginDate, endDate);
+            if ( !Util.isEmpty(dateValidation) ){
+               msg += dateValidation;
+               isError = true;
+            }
+         }
+
+         String jsonPreguntas = (String) settings.get("settings.instanceJson");
+         if (!Util.isValidJson(jsonPreguntas))
+         {
+            Activator.getLog().info("entra if json ");
+            msg += messages.getString("setting.error.json");
+            isError = true;
+         }
+         if (isError)
+         {
+            status.addStatus("setting.settingvalidationexample.error",
+                  "settings.instanceJson", msg,
+                  SettingsStatus.STATUS_TYPE_ERROR);
+            return false;
+         }
       }
       else
+
       {
          Activator.getLog().info("Pid padre");
          ArrayList lstServer = new ArrayList();

@@ -69,6 +69,7 @@
 		</esf:display>
 		<element name="settings.instanceJson" type="String">
 			<description value="settings.instanceJson.description" />
+			<length min="1" max="10000" />
 		</element>
 		<element name="settings.instanceName" type="String">
 			<description value="settings.instanceName.description" />
