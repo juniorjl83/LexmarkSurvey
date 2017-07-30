@@ -40,7 +40,9 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
    boolean activated = false;
    private ServiceRegistration profileRegistration = null;
    private static final String CARRIAGE_RETURN = System
-         .getProperty("line.separator");;
+         .getProperty("line.separator");
+   private boolean isValidLog = false;
+   private boolean isValidPreguntas = false;
    // private SurveyProfileService _surveyprofileservice = null;
 
    /**
@@ -85,6 +87,13 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
       MessagePrompt mp1;
       try
       {
+         if (isValidLog && isValidPreguntas){
+            
+            
+            
+         }else{
+            
+         }
          Messages message = new Messages("Resources", context.getLocale(),
                getClass().getClassLoader());
          String label = message.getString("prompt.label");
@@ -213,7 +222,8 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
          {
             Activator.getLog().info("entra if both dates valid ");
             String dateValidation = Util.dateValidation(beginDate, endDate);
-            if ( !Util.isEmpty(dateValidation) ){
+            if (!Util.isEmpty(dateValidation))
+            {
                msg += dateValidation;
                isError = true;
             }
@@ -226,6 +236,16 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
             msg += messages.getString("setting.error.json");
             isError = true;
          }
+
+         // validacion estructura json
+         ValidacionJson validacionJson = Util
+               .validateJsonStructure(jsonPreguntas, Activator.getLog());
+         if (validacionJson.isError())
+         {
+            msg += validacionJson.getMsgValidacion();
+            isError = validacionJson.isError;
+         }
+
          if (isError)
          {
             status.addStatus("setting.settingvalidationexample.error",
@@ -233,9 +253,9 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                   SettingsStatus.STATUS_TYPE_ERROR);
             return false;
          }
+         isValidPreguntas = true;
       }
       else
-
       {
          Activator.getLog().info("Pid padre");
          ArrayList lstServer = new ArrayList();
@@ -278,6 +298,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                return false;
             }
          }
+         isValidLog = true;
       }
       return true;
    }
