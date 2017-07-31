@@ -14,6 +14,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import com.lexmark.prtapp.settings.SettingDefinition;
+import com.lexmark.prtapp.settings.SettingDefinitionMap;
 import com.lexmark.prtapp.util.AppLogRef;
 
 public class Util
@@ -109,8 +111,7 @@ public class Util
       return sb.toString();
    }
 
-   public static ValidacionJson validateJsonStructure(String jsonPreguntas,
-         AppLogRef appLogRef)
+   public static ValidacionJson validateJsonStructure(String jsonPreguntas)
    {
 
       StringBuffer sb = new StringBuffer("");
@@ -133,11 +134,6 @@ public class Util
             numeroPregunta++;
          }
 
-         for (int i = 0; i < preguntas.size(); i++)
-         {
-            appLogRef.info("pregunta " + i + " :::: " + preguntas.get(i));
-         }
-
       }
       catch (JSONException e)
       {
@@ -152,7 +148,7 @@ public class Util
          validacionJson.setError(true);
          return validacionJson;
       }
-      
+
       validacionJson.setPreguntas(preguntas);
       return validacionJson;
    }
@@ -240,5 +236,39 @@ public class Util
                + " opción No: " + opcion.getNumero() + " es obligatorio.");
       }
 
+   }
+
+   public static Encuesta parseSettingToEncuestaObj(
+         SettingDefinitionMap instance)
+   {
+      Encuesta encuesta = new Encuesta();
+      SettingDefinition name = instance.get("settings.instanceName");
+      SettingDefinition fechaInicio = instance.get("settings.instanceBegin");
+      SettingDefinition fechaFin = instance.get("settings.instanceEnd");
+      SettingDefinition json = instance.get("settings.instanceJson");
+
+      ValidacionJson validacionJson = validateJsonStructure(
+            (String) json.getCurrentValue());
+
+      encuesta.setNombre((String) name.getCurrentValue());
+      encuesta.setFechaInicio(
+            stringToDate((String) fechaInicio.getCurrentValue()));
+      encuesta.setFechaFin(stringToDate((String) fechaFin.getCurrentValue()));
+      encuesta.setPreguntas(validacionJson.getPreguntas());
+
+      return encuesta;
+   }
+
+   private static Date stringToDate(String fecha)
+   {
+      SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+      try
+      {
+         return formatter.parse(fecha);
+      }
+      catch (ParseException e)
+      {
+         return null;
+      }
    }
 }
