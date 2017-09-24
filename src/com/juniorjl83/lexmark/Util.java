@@ -82,7 +82,7 @@ public class Util
          Activator.getLog()
                .info("if begin < actual :: " + bDate.before(new Date()));
 
-         if (bDate.before(new Date()))
+         /*if (bDate.before(new Date()))
          {
             sb.append(
                   "La fecha inicio no puede ser anterior o igual al día de hoy.");
@@ -94,7 +94,7 @@ public class Util
             sb.append(
                   "La fecha fin no puede ser anterior o igual al día de hoy.");
             sb.append(CARRIAGE_RETURN);
-         }
+         }*/
 
          if (eDate.before(bDate) || eDate.equals(bDate))
          {

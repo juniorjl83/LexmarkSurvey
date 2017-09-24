@@ -7,11 +7,16 @@ import org.osgi.service.cm.ManagedService;
 import org.ungoverned.gravity.servicebinder.Lifecycle;
 import org.ungoverned.gravity.servicebinder.ServiceBinderContext;
 
+import com.juniorjl83.lexmark.customvlm.OmmrPrompt;
+import com.juniorjl83.lexmark.customvlm.OmurPrompt;
+import com.lexmark.prtapp.newcharacteristics.DeviceCharacteristicsService;
 import com.lexmark.prtapp.profile.BasicProfileContext;
 import com.lexmark.prtapp.profile.PrtappProfile;
 import com.lexmark.prtapp.profile.PrtappProfileException;
 import com.lexmark.prtapp.profile.WelcomeScreenable;
+import com.lexmark.prtapp.std.prompts.ComboPrompt;
 import com.lexmark.prtapp.std.prompts.MessagePrompt;
+import com.lexmark.prtapp.std.prompts.StringPrompt;
 import com.lexmark.prtapp.prompt.PromptException;
 import com.lexmark.prtapp.prompt.PromptFactory;
 import com.lexmark.prtapp.prompt.PromptFactoryException;
@@ -28,7 +33,10 @@ import com.lexmark.prtapp.smbclient.SmbClientService;
 import com.lexmark.prtapp.smbclient.SmbConfig.ConfigBuilder;
 
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -46,12 +54,14 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
    private SmbClientService smbClientService = null;
    private static final String icon = "/survey-icon11.png";
    private String iconText = null;
-   boolean activated = false;
+   private boolean activated = false;
    private ServiceRegistration profileRegistration = null;
    private static final String CARRIAGE_RETURN = System
          .getProperty("line.separator");
    private boolean isValidLog = false;
    private boolean isValidPreguntas = false;
+   private StringBuffer encabezado;
+   private DeviceCharacteristicsService characteristicsService = null;
    // private SurveyProfileService _surveyprofileservice = null;
 
    /**
@@ -89,12 +99,15 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
 
    public void go(BasicProfileContext context) throws PrtappProfileException
    {
-
-      // TODO : Implement your business logic here.
       Activator.getLog().info("Inicio de encuestas: ");
       context.showPleaseWait(true);
       PromptFactory pf = context.getPromptFactory();
+      ArrayList names = new ArrayList();
+      ArrayList pids = new ArrayList();
       MessagePrompt mp1;
+      String filename = "default.txt";
+      StringBuffer respuestas = new StringBuffer();
+
       try
       {
          if (isValidLog && isValidPreguntas)
@@ -112,66 +125,136 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                String pid = (String) i.next();
                SettingDefinitionMap instance = instances.getInstance(pid);
                encuesta = Util.parseSettingToEncuestaObj(instance);
-               encuestas.add(encuesta);
+               encuesta.setPid(pid);
+
+               Activator.getLog().info("fecha printer::: " + new Date());
+               Activator.getLog()
+                     .info("inicial encuesta::: " + encuesta.getFechaInicio());
+               Activator.getLog()
+                     .info("final encuesta::: " + encuesta.getFechaFin());
+
+               if ((encuesta.getFechaInicio() != null
+                     && encuesta.getFechaFin() != null)
+                     && new Date().after(encuesta.getFechaInicio())
+                     && new Date().before(encuesta.getFechaFin()))
+               {
+                  Activator.getLog().info("Agrega la encuesta");
+                  encuestas.add(encuesta);
+               }
+               else if (encuesta.getFechaInicio() == null
+                     && encuesta.getFechaFin() == null)
+               {
+                  Activator.getLog().info("Agrega la encuesta fechas null");
+                  encuestas.add(encuesta);
+               }
+               if (encuestas.isEmpty())
+               {
+                  throw new NoEncuestasActivasException();
+               }
             }
-            Activator.getLog().info("paraseado de encuestas ok");
-            StringBuffer sb = new StringBuffer("");
-            sb.append("se han configurado " + encuestas.size() + " encuestas.");
-            sb.append("\n");
-            sb.append("\n");
+
+            Collections.sort(encuestas, new Comparator());
+
             for (int j = 0; j < encuestas.size(); j++)
             {
-               Activator.getLog().info("iteracion encuestas");
                Encuesta encuesta = (Encuesta) encuestas.get(j);
-               sb.append("Encuesta no " + j + 1);
-               sb.append("\n");
-               sb.append("  Nombre: " + encuesta.getNombre());
-               sb.append("\n");
-               if (encuesta.getFechaInicio() != null)
-               {
-                  sb.append("  Fecha Inicio: " + encuesta.getFechaInicio());
-                  sb.append("\n");
-               }
-               if (encuesta.getFechaFin() != null)
-               {
-                  sb.append("  Fecha Fin: " + encuesta.getFechaFin());
-                  sb.append("\n");
-               }
+               names.add(encuesta.getNombre());
+               pids.add(encuesta.getPid());
 
+            }
+
+            if (names.size() > 0)
+            {
+               String[] namesAsArray = (String[]) names.toArray(new String[0]);
+               ComboPrompt cp = (ComboPrompt) context.getPromptFactory()
+                     .newPrompt(ComboPrompt.ID);
+               cp.setItems(namesAsArray);
+               cp.setLabel("Seleccione la encuesta a realizar.");
+               cp.setSelection(0);
+               context.displayPrompt(cp);
+
+               int selection = cp.getSelection();
+               String selectedPid = (String) pids.get(selection);
+               SettingDefinitionMap instance = instances
+                     .getInstance(selectedPid);
+               filename = (String) instance.get("settings.log.promptName")
+                     .getCurrentValue();
+
+               Encuesta encuesta = getEncuesta(selectedPid, encuestas);
+               encabezado = new StringBuffer();
+               encabezado.append("dirección MAC, Fecha, ");
                List preguntas = encuesta.getPreguntas();
+               respuestas = new StringBuffer();
+               String ip = characteristicsService.get("serialNumber");
+               SimpleDateFormat fecha = new SimpleDateFormat(
+                     "dd/MM/yyyy HH:mm");
+               respuestas.append(ip + "," + fecha.format(new Date()) + ",");
 
                for (int k = 0; k < preguntas.size(); k++)
                {
-                  Activator.getLog().info("iteracion preguntas");
                   Pregunta pregunta = (Pregunta) preguntas.get(k);
-                  sb.append("   Pregunta no " + pregunta.getId());
-                  sb.append("\n");
-                  sb.append("       Tipo: " + pregunta.getTipo());
-                  sb.append("\n");
-                  sb.append("       Pregunta: " + pregunta.getPregunta());
-                  sb.append("\n");
-                  sb.append("       Opciones");
-                  sb.append("\n");
-
+                  Activator.getLog()
+                        .info("Pregunta::: " + pregunta.getPregunta());
+                  encabezado.append(pregunta.getPregunta());
+                  String tipoPregunta = pregunta.getTipo();
                   List opciones = pregunta.getOpciones();
 
-                  for (int h = 0; h < opciones.size(); h++)
+                  if ("omur".equals(pregunta.getTipo()))
                   {
-                     Activator.getLog().info("iteracion opciones");
-                     Opcion opcion = (Opcion) opciones.get(h);
-                     sb.append("            Opcion no " + opcion.getNumero());
-                     sb.append("\n");
-                     sb.append("            Opcion descipcion: "
-                           + opcion.getDescripcion());
-                     sb.append("\n");
-                     sb.append(
-                           "            Opcion valor: " + opcion.getValor());
-                     sb.append("\n");
+                     OmurPrompt omurPromt = new OmurPrompt(
+                           String.valueOf(pregunta.getId()),
+                           pregunta.getPregunta(), opciones);
+                     context.displayPrompt(omurPromt);
+                     Activator.getLog().info(
+                           "dismiis button::: " + omurPromt.getDismissButton());
+                     if ("cancel".equals(omurPromt.getDismissButton()))
+                     {
+                        throw new PromptException(
+                              PromptException.PROMPT_CANCELLED_BY_USER);
+                     }
+                     respuestas.append(omurPromt.getRespuesta());
+                     Activator.getLog().info(
+                           "omur respuesta::: " + omurPromt.getRespuesta());
+                  }
+                  else if ("ommr".equals(pregunta.getTipo()))
+                  {
+                     OmmrPrompt ommrPromt = new OmmrPrompt(
+                           String.valueOf(pregunta.getId()),
+                           pregunta.getPregunta(), opciones);
+                     context.displayPrompt(ommrPromt);
+                     Activator.getLog().info(
+                           "dismiis button::: " + ommrPromt.getDismissButton());
+                     if ("cancel".equals(ommrPromt.getDismissButton()))
+                     {
+                        throw new PromptException(
+                              PromptException.PROMPT_CANCELLED_BY_USER);
+                     }
+                     respuestas.append(ommrPromt.getRespuesta());
+                     Activator.getLog().info(
+                           "ommr respuesta::: " + ommrPromt.getRespuesta());
+                  }
+                  else if ("texto".equals(pregunta.getTipo()))
+                  {
+                     StringPrompt texto = (StringPrompt) context
+                           .getPromptFactory().newPrompt(StringPrompt.ID);
+                     texto.setName("texto");
+                     texto.setLabel(pregunta.getPregunta());
+                     texto.setMinLength(5);
+                     context.displayPrompt(texto);
+                     respuestas.append(texto.getValue().replace(',', ' '));
+                  }
+                  else
+                  {
+                  }
+
+                  if (k < (preguntas.size() - 1))
+                  {
+                     respuestas.append(",");
+                     encabezado.append(",");
                   }
                }
+               Activator.getLog().info("Respuestas:: " + respuestas.toString());
             }
-
-            Activator.getLog().info("fin iteraciones");
 
             SettingDefinitionMap ourAppSettings = settingsAdmin
                   .getGlobalSettings("survey2");
@@ -187,8 +270,6 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                   .get("settings.network.user").getCurrentValue();
             String password = (String) ourAppSettings
                   .get("settings.network.password").getCurrentValue();
-            String fileName = (String) ourAppSettings
-                  .get("settings.log.promptName").getCurrentValue();
 
             ConfigBuilder configBuilder = smbClientService
                   .getSmbConfigBuilder();
@@ -208,11 +289,12 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
             try
             {
                Activator.getLog().info("antes de escribir el log");
-               Activator.getLog().info("Log a escribir::: " + sb.toString());
+               Activator.getLog()
+                     .info("Log a escribir::: " + respuestas.toString());
                clientLog = smbClientService
                      .getNewSmbClient(configBuilder.build());
                WriteLog wl = new WriteLog(clientLog, Activator.getLog(),
-                     fileName, sb.toString());
+                     filename, respuestas.toString(), encabezado.toString());
                wl.start();
             }
             catch (com.lexmark.prtapp.smbclient.ConfigurationException e)
@@ -229,7 +311,8 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
 
             Messages message = new Messages("Resources", context.getLocale(),
                   getClass().getClassLoader());
-            String label = message.getString("Revice el log para ver lo que se configuró");
+            String label = message.getString(
+                  "Muchas gracias por ayudarnos a mejorar nuestro servicio.");
             mp1 = (MessagePrompt) pf.newPrompt(MessagePrompt.ID);
             mp1.setLabel(label);
             context.displayPrompt(mp1);
@@ -246,13 +329,27 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                   "Debe configurarse el log y por lo menos una encuesta antes de ingresar!");
             context.displayPrompt(noInstances);
          }
-         /*
-          * Messages message = new Messages("Resources", context.getLocale(),
-          * getClass().getClassLoader()); String label =
-          * message.getString("prompt.label"); mp1 = (MessagePrompt)
-          * pf.newPrompt(MessagePrompt.ID); mp1.setLabel(label);
-          * context.displayPrompt(mp1);
-          */
+      }
+      catch (NoEncuestasActivasException e)
+      {
+         MessagePrompt noInstances;
+         try
+         {
+            noInstances = (MessagePrompt) context.getPromptFactory()
+                  .newPrompt(MessagePrompt.ID);
+            noInstances.setMessage(
+                  "No existen encuestas activas. Contacte al administrador.!");
+            context.displayPrompt(noInstances);
+         }
+         catch (PromptFactoryException e1)
+         {
+            Activator.getLog().debug("Exception thrown", e);
+         }
+         catch (PromptException e1)
+         {
+            Activator.getLog().debug("Exception thrown", e);
+         }
+
       }
       catch (PromptFactoryException e)
       {
@@ -263,6 +360,45 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
          Activator.getLog().debug("Exception thrown", e);
       }
 
+   }
+
+   private String getRespuestas(int[] opcionesArray, List opciones)
+   {
+      StringBuffer respuestas = new StringBuffer();
+      for (int i = 0; i < opcionesArray.length; i++)
+      {
+         Opcion opcion = (Opcion) opciones.get(opcionesArray[i]);
+         respuestas.append(opcion.getValor());
+         if (i < opcionesArray.length - 1)
+         {
+            respuestas.append("-");
+         }
+      }
+      return respuestas.toString();
+   }
+
+   private String[] getOpciones(List opciones)
+   {
+      String[] opcionesArray = new String[opciones.size()];
+      for (int i = 0; i < opciones.size(); i++)
+      {
+         Opcion opcion = (Opcion) opciones.get(i);
+         opcionesArray[i] = opcion.getDescripcion();
+      }
+      return opcionesArray;
+   }
+
+   private Encuesta getEncuesta(String selectedPid, List encuestas)
+   {
+      for (int i = 0; i < encuestas.size(); i++)
+      {
+         Encuesta encuesta = (Encuesta) encuestas.get(i);
+         if (selectedPid.equals(encuesta.getPid()))
+         {
+            return encuesta;
+         }
+      }
+      return null;
    }
 
    /**
@@ -320,6 +456,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
       // entra a configurar encuestas
       if (!pid.equals("survey2"))
       {
+         isValidPreguntas = false;
          boolean isError = false;
          boolean isValidBeginDate = false;
          boolean isValidEndDate = false;
@@ -410,6 +547,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
       }
       else
       {
+         isValidLog = false;
          Activator.getLog().info("Pid padre");
          ArrayList lstServer = new ArrayList();
 
@@ -546,6 +684,22 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
          }
          if (iconNeedsUpdate) updateIcon();
       }
+   }
 
+   /**
+    * ServiceBinder method - called when DeviceCharacteristicsService arrives
+    */
+   public void addDeviceCharacteristics(DeviceCharacteristicsService svc)
+   {
+      characteristicsService = svc;
+   }
+
+   /**
+    * ServiceBinder method - called when DeviceCharacteristicsService leaves
+    * town
+    */
+   public void removeDeviceCharacteristics(DeviceCharacteristicsService svc)
+   {
+      characteristicsService = null;
    }
 }

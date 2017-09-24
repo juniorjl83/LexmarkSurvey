@@ -5,6 +5,7 @@ import java.util.List;
 
 public class Encuesta
 {
+   private String pid;
    private String nombre;
    private Date fechaInicio;
    private Date fechaFin;
@@ -15,8 +16,6 @@ public class Encuesta
       super();
    }
 
-   
-   
    public Encuesta(String nombre, Date fechaInicio, Date fechaFin,
          List preguntas)
    {
@@ -26,8 +25,6 @@ public class Encuesta
       this.fechaFin = fechaFin;
       this.preguntas = preguntas;
    }
-
-
 
    public String getNombre()
    {
@@ -67,6 +64,16 @@ public class Encuesta
    public void setPreguntas(List preguntas)
    {
       this.preguntas = preguntas;
+   }
+
+   public String getPid()
+   {
+      return pid;
+   }
+
+   public void setPid(String pid)
+   {
+      this.pid = pid;
    }
 
    public String toString()

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -23,14 +24,17 @@ public class WriteLog extends Thread
    private String dd = "99";
    private String line;
    private Boolean isFinish = Boolean.FALSE;
+   private String header;
 
-   public WriteLog(SmbClient client, AppLogRef log, String fileName, String line)
+   public WriteLog(SmbClient client, AppLogRef log, String fileName,
+         String line, String header)
    {
       super();
       this.client = client;
       this.log = log;
       this.fileName = fileName;
       this.line = line;
+      this.header = header;
    }
 
    public void run()
@@ -50,7 +54,7 @@ public class WriteLog extends Thread
 
       InputStream inputStream = null;
       OutputStream fileStream = null;
-
+      PrintStream ps = null;
       try
       {
          client.connect();
@@ -60,7 +64,7 @@ public class WriteLog extends Thread
             inputStream = client.getInputStream("", fileName);
 
             BufferedReader br = new BufferedReader(
-                  new InputStreamReader(inputStream));
+                  new InputStreamReader(inputStream, "UTF-8"));
             String temp = "";
             StringBuffer sb1 = new StringBuffer("");
 
@@ -71,15 +75,16 @@ public class WriteLog extends Thread
             }
             br.close();
             sb1.append(line);
-
             fileStream = client.getOutputStream("", fileName);
-            fileStream.write(sb1.toString().getBytes());
-
+            ps = new PrintStream(fileStream, true, "UTF-8");
+            ps.print(sb1.toString());
+            ps.flush();
          }
          else
          {
             fileStream = client.getOutputStream("", fileName);
-            fileStream.write(line.getBytes());
+            ps = new PrintStream(fileStream, true, "UTF-8");
+            ps.print(header + "\n" + line);
          }
       }
       catch (ConnectionException e)
@@ -107,6 +112,7 @@ public class WriteLog extends Thread
             if (fileStream != null) fileStream.close();
             if (inputStream != null) inputStream.close();
             if (client != null) client.close();
+            if (ps != null) ps.close();
          }
          catch (IOException e)
          {

@@ -8,18 +8,13 @@
 			<default value="Encuestas 2" />
 			<length min="1" max="50" />
 		</element>
-		<element name="settings.log.promptName" type="String">
-			<description value="settings.log.promptName.description" />
-			<default value="Log" />
-			<length max="500" />
-		</element>
 		<element name="settings.log.server" type="String">
 			<description value="settings.log.server.description" />
 			<length min="2" max="100" />
 		</element>
 		<element name="settings.log.shareName" type="String">
 			<description value="settings.log.shareName.description" />
-			<length min="0" max="50" />
+			<length min="1" max="50" />
 		</element>
 		<element name="settings.log.path" type="String">
 			<description value="settings.log.path.description" />
@@ -31,12 +26,12 @@
 		</element>
 		<element name="settings.network.user" type="String">
 			<description value="settings.network.user.description" />
-			<length min="0" max="30" />
+			<length min="1" max="30" />
 		</element>
 		<element name="settings.network.password" type="String"
 			subtype="Password">
 			<description value="settings.network.password.description" />
-			<length min="0" max="30" />
+			<length min="1" max="30" />
 		</element>
 		<element name="settings.sucursal" type="String">
 			<description value="settings.sucursal.description" />
@@ -54,7 +49,6 @@
 			<group title="log.title">
 				<description value="log.description" />
 				<settingref name="settings.sucursal" />
-				<settingref name="settings.log.promptName" />
 				<settingref name="settings.log.server" />
 				<settingref name="settings.log.shareName" />
 				<settingref name="settings.log.path" />
@@ -83,11 +77,17 @@
 			<description value="settings.instanceEnd.description" />
 			<length min="0" max="10" />
 		</element>
+		<element name="settings.log.promptName" type="String">
+			<description value="settings.log.promptName.description" />
+			<default value="Log" />
+			<length max="500" />
+		</element>
 		<layout>
 			<group title="settings.instanceSurvey">
 				<settingref name="settings.instanceName" />
 				<settingref name="settings.instanceBegin" />
 				<settingref name="settings.instanceEnd" />
+				<settingref name="settings.log.promptName" />
 				<settingref name="settings.instanceJson" control="textarea" />
 			</group>
 		</layout>
