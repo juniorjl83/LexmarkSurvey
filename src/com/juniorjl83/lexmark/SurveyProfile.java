@@ -7,6 +7,7 @@ import org.osgi.service.cm.ManagedService;
 import org.ungoverned.gravity.servicebinder.Lifecycle;
 import org.ungoverned.gravity.servicebinder.ServiceBinderContext;
 
+import com.juniorjl83.lexmark.customvlm.LikePrompt;
 import com.juniorjl83.lexmark.customvlm.OmmrPrompt;
 import com.juniorjl83.lexmark.customvlm.OmurPrompt;
 import com.lexmark.prtapp.newcharacteristics.DeviceCharacteristicsService;
@@ -182,7 +183,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
 
                Encuesta encuesta = getEncuesta(selectedPid, encuestas);
                encabezado = new StringBuffer();
-               encabezado.append("dirección MAC, Fecha, ");
+               encabezado.append("Equipo, Fecha, ");
                List preguntas = encuesta.getPreguntas();
                respuestas = new StringBuffer();
                String ip = characteristicsService.get("serialNumber");
@@ -242,6 +243,22 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                      texto.setMinLength(5);
                      context.displayPrompt(texto);
                      respuestas.append(texto.getValue().replace(',', ' '));
+                  }
+                  else if ("like".equals(pregunta.getTipo()))
+                  {
+                     LikePrompt likePromt = new LikePrompt(String.valueOf(pregunta.getId()),
+                           pregunta.getPregunta());
+                     context.displayPrompt(likePromt);
+                     Activator.getLog().info(
+                           "dismiis button::: " + likePromt.getDismissButton());
+                     if ("cancel".equals(likePromt.getDismissButton()))
+                     {
+                        throw new PromptException(
+                              PromptException.PROMPT_CANCELLED_BY_USER);
+                     }
+                     respuestas.append(likePromt.getRespuesta());
+                     Activator.getLog().info(
+                           "like respuesta::: " + likePromt.getRespuesta());
                   }
                   else
                   {

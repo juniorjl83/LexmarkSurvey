@@ -199,7 +199,8 @@ public class Util
       {
          if (!pregunta.getTipo().equals("ommr")
                && !pregunta.getTipo().equals("omur")
-               && !pregunta.getTipo().equals("texto"))
+               && !pregunta.getTipo().equals("texto")
+               && !pregunta.getTipo().equals("like"))
          {
             throw new JSONException(
                   "Tipo no soportado, en pregunta No: " + pregunta.getId());
