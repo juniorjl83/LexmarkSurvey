@@ -33,6 +33,7 @@ import com.lexmark.prtapp.smbclient.SmbClientException;
 import com.lexmark.prtapp.smbclient.SmbClientService;
 import com.lexmark.prtapp.smbclient.SmbConfig.ConfigBuilder;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -54,6 +55,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
    private SettingsAdmin settingsAdmin = null;
    private SmbClientService smbClientService = null;
    private static final String icon = "/survey-icon11.png";
+   private byte[] iconUpImage = null;
    private String iconText = null;
    private boolean activated = false;
    private ServiceRegistration profileRegistration = null;
@@ -197,7 +199,6 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                   Activator.getLog()
                         .info("Pregunta::: " + pregunta.getPregunta());
                   encabezado.append(pregunta.getPregunta());
-                  String tipoPregunta = pregunta.getTipo();
                   List opciones = pregunta.getOpciones();
 
                   if ("omur".equals(pregunta.getTipo()))
@@ -626,8 +627,16 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
 
    public InputStream getDownIcon()
    {
-      InputStream iconStream = getClass().getResourceAsStream(icon);
-      return iconStream;
+      if(iconUpImage == null || iconUpImage.length == 0)
+      {
+         InputStream iconStream = getClass().getResourceAsStream(icon);
+         return iconStream;
+      }
+      else
+      {
+         return new ByteArrayInputStream(iconUpImage);
+      }
+      
    }
 
    public String getIconText(Locale locale)
@@ -637,8 +646,15 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
 
    public InputStream getUpIcon()
    {
-      InputStream iconStream = getClass().getResourceAsStream(icon);
-      return iconStream;
+      if(iconUpImage == null || iconUpImage.length == 0)
+      {
+         InputStream iconStream = getClass().getResourceAsStream(icon);
+         return iconStream;
+      }
+      else
+      {
+         return new ByteArrayInputStream(iconUpImage);
+      }
    }
 
    public String getWorkflowOveride()
@@ -697,6 +713,10 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
             {
                iconNeedsUpdate = true;
                iconText = (String) value;
+            }else if(key.equals("settings.icon.image"))
+            {
+               iconNeedsUpdate = true;
+               iconUpImage = (byte[])value;
             }
          }
          if (iconNeedsUpdate) updateIcon();
