@@ -150,12 +150,12 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                   Activator.getLog().info("Agrega la encuesta fechas null");
                   encuestas.add(encuesta);
                }
-               if (encuestas.isEmpty())
-               {
-                  throw new NoEncuestasActivasException();
-               }
             }
-
+            
+            if (encuestas.isEmpty())
+            {
+               throw new NoEncuestasActivasException();
+            }
             Collections.sort(encuestas, new Comparator());
 
             for (int j = 0; j < encuestas.size(); j++)

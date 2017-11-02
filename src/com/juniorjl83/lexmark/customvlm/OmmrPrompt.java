@@ -153,7 +153,7 @@ public class OmmrPrompt implements VlmlPrompt
       if ( component.equals("ommr.navBar.next") ){
          Activator.getLog().info("entra a next");
          dismissButton = "next";
-         if ( respuesta != null ){
+         if ( respuesta != null && getRespuesta().length() > 0){
             result = PromptEventResult.VALIDATE;   
          }else{
             result = PromptEventResult.CONTINUE;

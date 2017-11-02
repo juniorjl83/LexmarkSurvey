@@ -157,7 +157,7 @@ public class LikePrompt implements VlmlPrompt
       if ( component.equals("like.navBar.next") ){
          Activator.getLog().info("entra a next");
          dismissButton = "next";
-         if ( respuesta != null ){
+         if ( respuesta != null && !getRespuesta().equals("null")){
             result = PromptEventResult.VALIDATE;   
          }else{
             result = PromptEventResult.CONTINUE;
