@@ -6,7 +6,7 @@ import java.util.List;
 public class ValidacionJson
 {
    String msgValidacion;
-   List preguntas = new ArrayList();
+   List encuestas = new ArrayList();
    boolean isError = false;
    
    public String getMsgValidacion()
@@ -17,13 +17,13 @@ public class ValidacionJson
    {
       this.msgValidacion = msgValidacion;
    }
-   public List getPreguntas()
+   public List getEncuestas()
    {
-      return preguntas;
+      return encuestas;
    }
-   public void setPreguntas(List preguntas)
+   public void setEncuestas(List encuestas)
    {
-      this.preguntas = preguntas;
+      this.encuestas = encuestas;
    }
    public boolean isError()
    {

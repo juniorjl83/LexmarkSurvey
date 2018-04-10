@@ -62,7 +62,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
    private static final String CARRIAGE_RETURN = System
          .getProperty("line.separator");
    private boolean isValidLog = false;
-   private boolean isValidPreguntas = false;
+   private boolean isValidEncuestas = false;
    private StringBuffer encabezado;
    private DeviceCharacteristicsService characteristicsService = null;
    // private SurveyProfileService _surveyprofileservice = null;
@@ -113,56 +113,38 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
 
       try
       {
-         if (isValidLog && isValidPreguntas)
+         if (isValidLog && isValidEncuestas)
          {
             Activator.getLog().info("validacion exitosa");
             SettingsGroup instances = settingsAdmin
                   .getInstanceSettings("survey2");
             Set set = instances.getInstancePids();
             Iterator i = set.iterator();
-            List encuestas = new ArrayList();
+            List servicios = new ArrayList();
 
             while (i.hasNext())
             {
-               Encuesta encuesta = new Encuesta();
+               Servicio servicio = new Servicio();
                String pid = (String) i.next();
                SettingDefinitionMap instance = instances.getInstance(pid);
-               encuesta = Util.parseSettingToEncuestaObj(instance);
-               encuesta.setPid(pid);
+               servicio = Util.parseSettingToServicioObj(instance);
+               servicio.setPid(pid);
+               
+               servicios.add(servicio);
 
-               Activator.getLog().info("fecha printer::: " + new Date());
-               Activator.getLog()
-                     .info("inicial encuesta::: " + encuesta.getFechaInicio());
-               Activator.getLog()
-                     .info("final encuesta::: " + encuesta.getFechaFin());
-
-               if ((encuesta.getFechaInicio() != null
-                     && encuesta.getFechaFin() != null)
-                     && new Date().after(encuesta.getFechaInicio())
-                     && new Date().before(encuesta.getFechaFin()))
-               {
-                  Activator.getLog().info("Agrega la encuesta");
-                  encuestas.add(encuesta);
-               }
-               else if (encuesta.getFechaInicio() == null
-                     && encuesta.getFechaFin() == null)
-               {
-                  Activator.getLog().info("Agrega la encuesta fechas null");
-                  encuestas.add(encuesta);
-               }
             }
             
-            if (encuestas.isEmpty())
+            if (servicios.isEmpty())
             {
-               throw new NoEncuestasActivasException();
+               throw new NoServiciosException();
             }
-            Collections.sort(encuestas, new Comparator());
+            Collections.sort(servicios, new Comparator());
 
-            for (int j = 0; j < encuestas.size(); j++)
+            for (int j = 0; j < servicios.size(); j++)
             {
-               Encuesta encuesta = (Encuesta) encuestas.get(j);
-               names.add(encuesta.getNombre());
-               pids.add(encuesta.getPid());
+               Servicio servicio = (Servicio) servicios.get(j);
+               names.add(servicio.getNombre());
+               pids.add(servicio.getPid());
 
             }
 
@@ -172,18 +154,19 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                ComboPrompt cp = (ComboPrompt) context.getPromptFactory()
                      .newPrompt(ComboPrompt.ID);
                cp.setItems(namesAsArray);
-               cp.setLabel("Seleccione la encuesta a realizar.");
+               cp.setLabel("Seleccione el servicio a encuestar.");
                cp.setSelection(0);
                context.displayPrompt(cp);
 
                int selection = cp.getSelection();
+               //TODO aca voyyyyyyyyyyyyyyyy
                String selectedPid = (String) pids.get(selection);
                SettingDefinitionMap instance = instances
                      .getInstance(selectedPid);
                filename = (String) instance.get("settings.log.promptName")
                      .getCurrentValue();
 
-               Encuesta encuesta = getEncuesta(selectedPid, encuestas);
+               Encuesta encuesta = getEncuesta(selectedPid, servicios);
                encabezado = new StringBuffer();
                encabezado.append("Equipo, Fecha, ");
                List preguntas = encuesta.getPreguntas();
@@ -348,7 +331,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
             context.displayPrompt(noInstances);
          }
       }
-      catch (NoEncuestasActivasException e)
+      catch (NoServiciosException e)
       {
          MessagePrompt noInstances;
          try
@@ -356,7 +339,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
             noInstances = (MessagePrompt) context.getPromptFactory()
                   .newPrompt(MessagePrompt.ID);
             noInstances.setMessage(
-                  "No existen encuestas activas. Contacte al administrador.!");
+                  "No existen servicios configurados. Contacte al administrador.!");
             context.displayPrompt(noInstances);
          }
          catch (PromptFactoryException e1)
@@ -411,7 +394,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
       for (int i = 0; i < encuestas.size(); i++)
       {
          Encuesta encuesta = (Encuesta) encuestas.get(i);
-         if (selectedPid.equals(encuesta.getPid()))
+         if (selectedPid.equals(encuesta.getId()))
          {
             return encuesta;
          }
@@ -471,71 +454,11 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
       Activator.getLog().info("Pid is " + pid);
       Messages messages = new Messages(locale, getClass().getClassLoader());
       String msg = "";
-      // entra a configurar encuestas
+      // entra a configurar servicios
       if (!pid.equals("survey2"))
       {
-         isValidPreguntas = false;
+         isValidEncuestas = false;
          boolean isError = false;
-         boolean isValidBeginDate = false;
-         boolean isValidEndDate = false;
-
-         String beginDate = (String) settings.get("settings.instanceBegin");
-         Activator.getLog()
-               .info("begin date validation: " + Util.isValidDate(beginDate));
-         if (!Util.isEmpty(beginDate))
-         {
-            if (!Util.isValidDate(beginDate))
-            {
-               Activator.getLog().info("entra if beginDate ");
-               msg += messages.getString("setting.error.beginDate");
-               msg += CARRIAGE_RETURN;
-               isError = true;
-            }
-            else
-            {
-               Activator.getLog().info("entra else beginDate ");
-               isValidBeginDate = true;
-            }
-         }
-
-         String endDate = (String) settings.get("settings.instanceEnd");
-         Activator.getLog()
-               .info("end date validation: " + Util.isValidDate(endDate));
-         if (!Util.isEmpty(endDate))
-         {
-            if (!Util.isValidDate(endDate))
-            {
-               Activator.getLog().info("entra if endDate ");
-               msg += messages.getString("setting.error.endDate");
-               msg += CARRIAGE_RETURN;
-               isError = true;
-            }
-            else
-            {
-               Activator.getLog().info("entra else endDate ");
-               isValidEndDate = true;
-            }
-         }
-
-         if ((Util.isEmpty(beginDate) && !Util.isEmpty(endDate))
-               || (!Util.isEmpty(beginDate) && Util.isEmpty(endDate)))
-         {
-            Activator.getLog().info("entra if bothDates ");
-            msg += messages.getString("setting.error.bothDatesmustFill");
-            msg += CARRIAGE_RETURN;
-            isError = true;
-         }
-
-         if (isValidBeginDate && isValidEndDate)
-         {
-            Activator.getLog().info("entra if both dates valid ");
-            String dateValidation = Util.dateValidation(beginDate, endDate);
-            if (!Util.isEmpty(dateValidation))
-            {
-               msg += dateValidation;
-               isError = true;
-            }
-         }
 
          String jsonPreguntas = (String) settings.get("settings.instanceJson");
          if (!Util.isValidJson(jsonPreguntas))
@@ -561,7 +484,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                   SettingsStatus.STATUS_TYPE_ERROR);
             return false;
          }
-         isValidPreguntas = true;
+         isValidEncuestas = true;
       }
       else
       {

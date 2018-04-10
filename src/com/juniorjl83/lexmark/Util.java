@@ -17,6 +17,7 @@ import org.json.simple.parser.JSONParser;
 import com.lexmark.prtapp.settings.SettingDefinition;
 import com.lexmark.prtapp.settings.SettingDefinitionMap;
 import com.lexmark.prtapp.util.AppLogRef;
+import com.lexmark.prtapp.util.Messages;
 
 public class Util
 {
@@ -111,29 +112,28 @@ public class Util
       return sb.toString();
    }
 
-   public static ValidacionJson validateJsonStructure(String jsonPreguntas)
+   public static ValidacionJson validateJsonStructure(String jsonEncuestas)
    {
 
       StringBuffer sb = new StringBuffer("");
       JSONParser parser = new JSONParser();
       ValidacionJson validacionJson = new ValidacionJson();
-      List preguntas = new ArrayList();
+      List encuestas = new ArrayList();
 
       try
       {
-         Object obj = parser.parse(jsonPreguntas);
-         JSONArray objetos = (JSONArray) obj;
+         Object objEncuestas = parser.parse(jsonEncuestas);
+         JSONArray arrayEncuestas = (JSONArray) objEncuestas;
 
-         Iterator iterator = objetos.iterator();
-         int numeroPregunta = 1;
+         Iterator iteEncuestas = arrayEncuestas.iterator();
+         int numeroEncuesta = 1;
 
-         while (iterator.hasNext())
+         while (iteEncuestas.hasNext())
          {
-            preguntas.add(jsonObjtoPreguntaObjConverter(
-                  (JSONObject) iterator.next(), numeroPregunta));
-            numeroPregunta++;
+            encuestas.add(jsonObjtoEncuestaObjConverter(
+                  (JSONObject) iteEncuestas.next(), String.valueOf(numeroEncuesta)));
+            numeroEncuesta++;
          }
-
       }
       catch (JSONException e)
       {
@@ -144,17 +144,17 @@ public class Util
       catch (org.json.simple.parser.ParseException e)
       {
          validacionJson
-               .setMsgValidacion("error en el formato de las preguntas");
+               .setMsgValidacion("error en el formato de las encuestas");
          validacionJson.setError(true);
          return validacionJson;
       }
 
-      validacionJson.setPreguntas(preguntas);
+      validacionJson.setEncuestas(encuestas);
       return validacionJson;
    }
 
    private static Pregunta jsonObjtoPreguntaObjConverter(JSONObject jsonObject,
-         int numeroPregunta) throws JSONException
+         int numeroPregunta, String noEncuesta) throws JSONException
    {
 
       Pregunta pregunta = new Pregunta();
@@ -162,13 +162,107 @@ public class Util
       pregunta.setTipo((String) jsonObject.get("tipo"));
       pregunta.setPregunta((String) jsonObject.get("pregunta"));
       pregunta.setOpciones(getOpciones((JSONArray) jsonObject.get("opciones"),
-            numeroPregunta));
-      validarPregunta(pregunta);
+            numeroPregunta, noEncuesta));
+      validarPregunta(pregunta, noEncuesta);
       return pregunta;
 
    }
+   
+   private static Encuesta jsonObjtoEncuestaObjConverter(JSONObject jsonObject,
+         String numeroEncuesta) throws JSONException
+   {
+      String msg = validarFechasEncuesta(jsonObject, numeroEncuesta);
+      if (!isEmpty(msg)){
+         throw new JSONException(msg);
+      }
+         
+      Encuesta encuesta = new Encuesta();
+      encuesta.setId(numeroEncuesta);
+      encuesta.setNombre((String) jsonObject.get("nombre"));
+      encuesta.setFechaInicio(stringToDate((String) jsonObject.get("inicio")));
+      encuesta.setFechaFin(stringToDate((String) jsonObject.get("fin")));
 
-   private static List getOpciones(JSONArray jsonArray, int noPregunta)
+      JSONArray objPreguntas = (JSONArray) jsonObject.get("preguntas");
+      List preguntas = new ArrayList();
+      Iterator iterator = objPreguntas.iterator();
+      int numeroPregunta = 1;
+
+      while (iterator.hasNext())
+      {
+         preguntas.add(jsonObjtoPreguntaObjConverter(
+               (JSONObject) iterator.next(), numeroPregunta, numeroEncuesta));
+         numeroPregunta++;
+      }
+      
+      validarEncuesta(encuesta);
+      
+      return encuesta;
+
+   }
+
+   private static String validarFechasEncuesta(JSONObject jsonObject, String numeroEncuesta)
+   {
+      boolean isValidBeginDate = false;
+      boolean isValidEndDate = false;
+      String msg = "";
+      
+      String beginDate = (String) jsonObject.get("inicio");
+      Activator.getLog()
+            .info("begin date validation: " + Util.isValidDate(beginDate));
+      if (!Util.isEmpty(beginDate))
+      {
+         if (!Util.isValidDate(beginDate))
+         {
+            Activator.getLog().info("entra if beginDate ");
+            msg += "Error en el formato de la fecha inicio en la encuesta No: " + numeroEncuesta;
+            msg += CARRIAGE_RETURN;
+         }
+         else
+         {
+            Activator.getLog().info("entra else beginDate ");
+            isValidBeginDate = true;
+         }
+      }
+
+      String endDate = (String) jsonObject.get("fin");
+      Activator.getLog()
+            .info("end date validation: " + Util.isValidDate(endDate));
+      if (!Util.isEmpty(endDate))
+      {
+         if (!Util.isValidDate(endDate))
+         {
+            Activator.getLog().info("entra if endDate ");
+            msg += "Error en el formato de la fecha fin en la encuesta No: " + numeroEncuesta;
+            msg += CARRIAGE_RETURN;
+         }
+         else
+         {
+            Activator.getLog().info("entra else endDate ");
+            isValidEndDate = true;
+         }
+      }
+
+      if ((Util.isEmpty(beginDate) && !Util.isEmpty(endDate))
+            || (!Util.isEmpty(beginDate) && Util.isEmpty(endDate)))
+      {
+         Activator.getLog().info("entra if bothDates ");
+         msg += "Deben estar diligenciadas ambas fechas en la encuesta No: " + numeroEncuesta;
+         msg += CARRIAGE_RETURN;
+      }
+
+      if (isValidBeginDate && isValidEndDate)
+      {
+         Activator.getLog().info("entra if both dates valid ");
+         String dateValidation = Util.dateValidation(beginDate, endDate);
+         if (!Util.isEmpty(dateValidation))
+         {
+            msg += dateValidation;
+         }
+      }
+      return msg;
+   }
+
+   private static List getOpciones(JSONArray jsonArray, int noPregunta, String noEncuesta)
          throws JSONException
    {
       Iterator iterator = jsonArray.iterator();
@@ -181,35 +275,39 @@ public class Util
          opcion.setNumero(numeroOpcion);
          opcion.setDescripcion((String) jsonObject.get("desc"));
          opcion.setValor((String) jsonObject.get("valor"));
-         validarOpcion(opcion, noPregunta);
+         validarOpcion(opcion, noPregunta, noEncuesta);
          opciones.add(opcion);
          numeroOpcion++;
       }
       return opciones;
    }
-
-   private static void validarPregunta(Pregunta pregunta) throws JSONException
+   
+   private static void validarPregunta(Pregunta pregunta, String numeroEncuesta) throws JSONException
    {
       if (isEmpty(pregunta.getTipo()))
       {
          throw new JSONException(
-               "Tipo en pregunta No: " + pregunta.getId() + " es obligatorio.");
+               "Tipo en pregunta No: " + pregunta.getId() + " es obligatorio en encuesta No: "
+                     + numeroEncuesta);
       }
       else
       {
          if (!pregunta.getTipo().equals("ommr")
                && !pregunta.getTipo().equals("omur")
                && !pregunta.getTipo().equals("texto")
-               && !pregunta.getTipo().equals("like"))
+               && !pregunta.getTipo().equals("like")
+               && !pregunta.getTipo().equals("numerico"))
          {
             throw new JSONException(
-                  "Tipo no soportado, en pregunta No: " + pregunta.getId());
+                  "Tipo no soportado, en pregunta No: " + pregunta.getId() 
+                  + " es obligatorio en encuesta No: " + numeroEncuesta);
          }
       }
       if (isEmpty(pregunta.getPregunta()))
       {
          throw new JSONException("Pregunta en pregunta No: " + pregunta.getId()
-               + " es obligatorio.");
+               + " es obligatorio en encuesta No: "
+                     + numeroEncuesta);
       }
       if (pregunta.getTipo().equals("ommr")
             || pregunta.getTipo().equals("omur"))
@@ -218,50 +316,66 @@ public class Util
          {
             throw new JSONException("Opciones en pregunta No: "
                   + pregunta.getId() + " es obligatorio cuando es de tipo: "
-                  + pregunta.getTipo());
+                  + pregunta.getTipo() + " en encuesta No: "
+                  + numeroEncuesta);
          }
       }
    }
 
-   private static void validarOpcion(Opcion opcion, int noPregunta)
+   private static void validarEncuesta(Encuesta encuesta) throws JSONException
+   {
+      if (isEmpty(encuesta.getNombre()))
+      {
+         throw new JSONException(
+               "Nombre de encuesta No: " + encuesta.getId() + " es obligatorio.");
+      }
+      if (encuesta.getPreguntas().size() == 0){
+         throw new JSONException("Preguntas en encuesta No: "
+               + encuesta.getId() + " es obligatorio.");
+      }
+         
+   }
+   
+   private static void validarOpcion(Opcion opcion, int noPregunta, String noEncuesta)
          throws JSONException
    {
       if (isEmpty(opcion.getDescripcion()))
       {
-         throw new JSONException("Descripción en pregunta No: " + noPregunta
-               + " opción No: " + opcion.getNumero() + " es obligatorio.");
+         throw new JSONException("Descripción en opción No: " + opcion.getNumero()
+               + " pregunta No: " + noPregunta + " y encuesta No: "
+               + noEncuesta + " es obligatorio.");
       }
       if (isEmpty(opcion.getValor()))
       {
-         throw new JSONException("Valor en pregunta No: " + noPregunta
-               + " opción No: " + opcion.getNumero() + " es obligatorio.");
+         throw new JSONException("Valor en opción No: " + opcion.getNumero()
+               + " pregunta No: " + noPregunta + " y encuesta No: "
+               + noEncuesta + " es obligatorio.");
       }
 
    }
 
-   public static Encuesta parseSettingToEncuestaObj(
+   public static Servicio parseSettingToServicioObj(
          SettingDefinitionMap instance)
    {
-      Encuesta encuesta = new Encuesta();
+      Servicio servicio = new Servicio();
       SettingDefinition name = instance.get("settings.instanceName");
-      SettingDefinition fechaInicio = instance.get("settings.instanceBegin");
-      SettingDefinition fechaFin = instance.get("settings.instanceEnd");
       SettingDefinition json = instance.get("settings.instanceJson");
 
       ValidacionJson validacionJson = validateJsonStructure(
             (String) json.getCurrentValue());
 
-      encuesta.setNombre((String) name.getCurrentValue());
-      encuesta.setFechaInicio(
-            stringToDate((String) fechaInicio.getCurrentValue()));
-      encuesta.setFechaFin(stringToDate((String) fechaFin.getCurrentValue()));
-      encuesta.setPreguntas(validacionJson.getPreguntas());
+      servicio.setNombre((String) name.getCurrentValue());
+      servicio.setEncuestas(validacionJson.getEncuestas());
 
-      return encuesta;
+      return servicio;
    }
 
    private static Date stringToDate(String fecha)
    {
+      if (isEmpty(fecha)){
+         return null;
+      }
+         
       SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
       try
       {

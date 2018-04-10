@@ -1,0 +1,64 @@
+[{
+	"encuesta": "Encuesta servicio",
+	"inicio": "2018-04-09",
+	"fin": "2018-12-31",
+	"log": "encuesta1.txt",
+	"preguntas": [{
+			"tipo": "omur",
+			"pregunta": "¿Como le pareció el servicio?",
+			"opciones": [{
+					"desc": "Muy Excelente",
+					"valor": "5"
+				},
+				{
+					"desc": "Bueno",
+					"valor": "4"
+				},
+				{
+					"desc": "Regular",
+					"valor": "3"
+				},
+				{
+					"desc": "Malo",
+					"valor": "2"
+				}
+			]
+		},
+		{
+			"tipo": "ommr",
+			"pregunta": "¿Seleccione sus Hobbys?",
+			"opciones": [{
+					"desc": "Futbol",
+					"valor": "Futbol"
+				},
+				{
+					"desc": "Trotar",
+					"valor": "Trotar"
+				},
+				{
+					"desc": "Familia",
+					"valor": "Familia"
+				},
+				{
+					"desc": "Cine",
+					"valor": "Cine"
+				},
+				{
+					"desc": "Otro",
+					"valor": "Otro"
+				}
+			]
+		},
+		{
+			"tipo": "texto",
+			"pregunta": "Digite tu Nombre",
+			"opciones": []
+		},
+		{
+			"tipo": "numerico",
+			"pregunta": "De 1 a 10 como le pareció el servicio",
+			"minimo": "1",
+			"maximo": "11"
+		}
+	]
+}]
