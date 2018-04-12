@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Encuesta
 {
-   private String id;
+   private String pid;
    private String nombre;
    private Date fechaInicio;
    private Date fechaFin;
@@ -66,14 +66,14 @@ public class Encuesta
       this.preguntas = preguntas;
    }
 
-   public String getId()
+   public String getPid()
    {
-      return id;
+      return pid;
    }
 
-   public void setId(String id)
+   public void setPid(String pid)
    {
-      this.id = id;
+      this.pid = pid;
    }
 
    public String toString()

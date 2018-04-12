@@ -74,9 +74,25 @@
 			<description value="settings.instanceName.description" />
 			<length min="1" max="100" />
 		</element>
+		<element name="settings.instanceBegin" type="String">
+			<description value="settings.instanceBegin.description" />
+			<length min="0" max="10" />
+		</element>
+		<element name="settings.instanceEnd" type="String">
+			<description value="settings.instanceEnd.description" />
+			<length min="0" max="10" />
+		</element>
+		<element name="settings.log.promptName" type="String">
+			<description value="settings.log.promptName.description" />
+			<default value="Log" />
+			<length max="500" />
+		</element>
 		<layout>
 			<group title="settings.instanceSurvey">
 				<settingref name="settings.instanceName" />
+				<settingref name="settings.instanceBegin" />
+				<settingref name="settings.instanceEnd" />
+				<settingref name="settings.log.promptName" />
 				<settingref name="settings.instanceJson" control="textarea" />
 			</group>
 		</layout>
