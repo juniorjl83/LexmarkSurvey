@@ -64,6 +64,7 @@
 
 	<factory name="settings.surveyTitle">
 		<esf:display pattern="settings.inst.pattern">
+			<esf:param value="settings.instanceService" />
 			<esf:param value="settings.instanceName" />
 		</esf:display>
 		<element name="settings.instanceJson" type="String">
@@ -72,6 +73,10 @@
 		</element>
 		<element name="settings.instanceName" type="String">
 			<description value="settings.instanceName.description" />
+			<length min="1" max="100" />
+		</element>
+		<element name="settings.instanceService" type="String">
+			<description value="settings.instanceService.description" />
 			<length min="1" max="100" />
 		</element>
 		<element name="settings.instanceBegin" type="String">
@@ -89,6 +94,7 @@
 		</element>
 		<layout>
 			<group title="settings.instanceSurvey">
+				<settingref name="settings.instanceService" />
 				<settingref name="settings.instanceName" />
 				<settingref name="settings.instanceBegin" />
 				<settingref name="settings.instanceEnd" />

@@ -148,7 +148,15 @@ public class Util
          validacionJson.setError(true);
          return validacionJson;
       }
-
+      catch (Exception e){
+         validacionJson
+               .setMsgValidacion("error desconocido.");
+         Activator.getLog().info(e.getClass().toString());
+         Activator.getLog().info(e.getMessage());
+         validacionJson.setError(true);
+         return validacionJson;
+      }
+      
       validacionJson.setPreguntas(preguntas);
       return validacionJson;
    }
@@ -161,8 +169,17 @@ public class Util
       pregunta.setId(numeroPregunta);
       pregunta.setTipo((String) jsonObject.get("tipo"));
       pregunta.setPregunta((String) jsonObject.get("pregunta"));
-      pregunta.setOpciones(getOpciones((JSONArray) jsonObject.get("opciones"),
-            numeroPregunta));
+      if ("omur".equals(pregunta.getTipo()) 
+            || "ommr".equals(pregunta.getTipo())){
+         pregunta.setOpciones(getOpciones((JSONArray) jsonObject.get("opciones"),
+               numeroPregunta));   
+      }
+
+      if ("numerico".equals(pregunta.getTipo())){
+         pregunta.setMinimo((String) jsonObject.get("minimo"));
+         pregunta.setMaximo((String) jsonObject.get("maximo"));
+      }
+      
       validarPregunta(pregunta);
       return pregunta;
 
@@ -200,7 +217,8 @@ public class Util
          if (!pregunta.getTipo().equals("ommr")
                && !pregunta.getTipo().equals("omur")
                && !pregunta.getTipo().equals("texto")
-               && !pregunta.getTipo().equals("like"))
+               && !pregunta.getTipo().equals("like")
+               && !pregunta.getTipo().equals("numerico"))
          {
             throw new JSONException(
                   "Tipo no soportado, en pregunta No: " + pregunta.getId());
@@ -219,6 +237,20 @@ public class Util
             throw new JSONException("Opciones en pregunta No: "
                   + pregunta.getId() + " es obligatorio cuando es de tipo: "
                   + pregunta.getTipo());
+         }
+      }
+      if ("numerico".equals(pregunta.getTipo()))
+      {
+         if (!isNumeric(pregunta.getMinimo()))
+         {
+            throw new JSONException("Valor mínimo en pregunta No: "
+                  + pregunta.getId() + " debe ser de tipo numérico: ");
+         }
+            
+         if (!isNumeric(pregunta.getMaximo()))
+         {
+            throw new JSONException("Valor máximo en pregunta No: "
+                  + pregunta.getId() + " debe ser de tipo numérico: ");
          }
       }
    }
@@ -245,6 +277,7 @@ public class Util
       Encuesta encuesta = new Encuesta();
       SettingDefinition name = instance.get("settings.instanceName");
       SettingDefinition fechaInicio = instance.get("settings.instanceBegin");
+      SettingDefinition servicio = instance.get("settings.instanceService");
       SettingDefinition fechaFin = instance.get("settings.instanceEnd");
       SettingDefinition json = instance.get("settings.instanceJson");
 
@@ -252,6 +285,7 @@ public class Util
             (String) json.getCurrentValue());
 
       encuesta.setNombre((String) name.getCurrentValue());
+      encuesta.setServicio((String) servicio.getCurrentValue());
       encuesta.setFechaInicio(
             stringToDate((String) fechaInicio.getCurrentValue()));
       encuesta.setFechaFin(stringToDate((String) fechaFin.getCurrentValue()));
@@ -271,5 +305,18 @@ public class Util
       {
          return null;
       }
+   }
+   
+   public static boolean isNumeric(String str)  
+   {  
+     try  
+     {  
+       double d = Integer.parseInt(str);  
+     }  
+     catch(NumberFormatException nfe)  
+     {  
+       return false;  
+     }  
+     return true;  
    }
 }
