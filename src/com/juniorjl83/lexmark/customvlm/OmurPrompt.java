@@ -58,18 +58,28 @@ public class OmurPrompt implements VlmlPrompt
       screen.append(" </AttachChild>\n");
       screen.append(" <AttachChild bottom=\"4\" top=\"3\" right=\"1\" left=\"0\" yPadding=\"0\" xPadding=\"0\" yGFill=\"shrink\" xGFill=\"expandFill\">\n");
       screen.append("     <BoxLayout name=\"navBar\" color=\"b2b2b2\" orientation=\"horizontal\">\n");
+      
       screen.append("         <AttachChildToTheEnd fill=\"shrink\">\n");
       screen.append("             <LabeledImageButton name=\"next\" overlayStyle=\"bold\" overlayPointSize=\"16\">\n");
       screen.append("                 <Normal text=\"Siguiente\" imageName=\"navRowOptionsUp\"/>\n");
       screen.append("                 <Selected text=\"Siguiente\" imageName=\"navRowOptionsDown\"/>\n");
       screen.append("             </LabeledImageButton>\n");
       screen.append("         </AttachChildToTheEnd>\n");
+      
+      screen.append("         <AttachChildToTheEnd fill=\"shrink\">\n");
+      screen.append("             <LabeledImageButton name=\"back\" overlayStyle=\"bold\" overlayPointSize=\"16\">\n");
+      screen.append("                 <Normal text=\"Atrás\" imageName=\"navRowOptionsUp\"/>\n");
+      screen.append("                 <Selected text=\"Atrás\" imageName=\"navRowOptionsDown\"/>\n");
+      screen.append("             </LabeledImageButton>\n");
+      screen.append("         </AttachChildToTheEnd>\n");
+      
       screen.append("         <AttachChildToTheEnd fill=\"shrink\">\n");
       screen.append("             <LabeledImageButton name=\"cancel\">\n");
       screen.append("                 <Normal imageName=\"homeUp\"/>\n");
       screen.append("                 <Selected imageName=\"homeDown\"/>\n");
       screen.append("             </LabeledImageButton>\n");
       screen.append("         </AttachChildToTheEnd>\n");
+      
       screen.append("     </BoxLayout>");
       screen.append(" </AttachChild>\n");
       screen.append("</GridLayout>");
@@ -140,6 +150,10 @@ public class OmurPrompt implements VlmlPrompt
          }else{
             result = PromptEventResult.CONTINUE;
          }
+      }else if ( component.equals("omur.navBar.back") ){
+         Activator.getLog().info("entra a back");
+         dismissButton = "back";
+         result = PromptEventResult.VALIDATE;
       }else if (component.equals("omur.navBar.cancel")){
          Activator.getLog().info("entra a cancel");
          dismissButton = "cancel";

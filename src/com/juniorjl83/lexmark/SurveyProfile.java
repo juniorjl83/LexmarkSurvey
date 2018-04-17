@@ -11,6 +11,7 @@ import com.juniorjl83.lexmark.customvlm.LikePrompt;
 import com.juniorjl83.lexmark.customvlm.OmmrPrompt;
 import com.juniorjl83.lexmark.customvlm.OmurPrompt;
 import com.lexmark.prtapp.newcharacteristics.DeviceCharacteristicsService;
+import com.lexmark.prtapp.profile.BasicNavigator;
 import com.lexmark.prtapp.profile.BasicProfileContext;
 import com.lexmark.prtapp.profile.PrtappProfile;
 import com.lexmark.prtapp.profile.PrtappProfileException;
@@ -65,7 +66,6 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
          .getProperty("line.separator");
    private boolean isValidLog = false;
    private boolean isValidPreguntas = false;
-   private StringBuffer encabezado;
    private DeviceCharacteristicsService characteristicsService = null;
    // private SurveyProfileService _surveyprofileservice = null;
 
@@ -109,7 +109,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
       PromptFactory pf = context.getPromptFactory();
       MessagePrompt mp1;
       String filename = "default.txt";
-      StringBuffer respuestas = new StringBuffer();
+      Log lineLog = new Log();
 
       try
       {
@@ -170,157 +170,279 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                namesServicios.add(servicio.getNombre());
 
             }
-            
-            String[] namesAsArray = (String[]) namesServicios.toArray(new String[0]);
-            ComboPrompt cp = (ComboPrompt) context.getPromptFactory()
-                  .newPrompt(ComboPrompt.ID);
-            cp.setItems(namesAsArray);
-            cp.setLabel("Seleccione el Servicio a encuestar.");
-            cp.setSelection(0);
-            context.displayPrompt(cp);
-            int selection = cp.getSelection();
-            
-            Servicio servicioSeleccionado = (Servicio) cbServicios.get(selection);
-            List targetEncuestas = servicioSeleccionado.getEncuestas();
+            boolean controlPantallas = true;
+            int state = 0;
             String selectedPid = "";
-            if (targetEncuestas.size() > 1)
-            {
-               //todo en base a el servicio seleccionado
-               Collections.sort(encuestas, new ComparatorEncuesta());
-               ArrayList namesEncuestas = new ArrayList();
-               ArrayList pidsEncuestas = new ArrayList();
-               for (int j = 0; j < targetEncuestas.size(); j++)
-               {
-                  Encuesta encuesta = (Encuesta) targetEncuestas.get(j);
-                  namesEncuestas.add(encuesta.getNombre());
-                  pidsEncuestas.add(encuesta.getPid());
-
-               }
-               
-               namesAsArray = (String[]) namesEncuestas.toArray(new String[0]);
-               cp = (ComboPrompt) context.getPromptFactory()
-                     .newPrompt(ComboPrompt.ID);
-               cp.setItems(namesAsArray);
-               cp.setLabel("Seleccione la encuesta a realizar.");
-               cp.setSelection(0);
-               context.displayPrompt(cp);
-
-               selection = cp.getSelection();
-               selectedPid = (String) pidsEncuestas.get(selection);
-            } 
-            else
-            {
-               selectedPid = ((Encuesta) targetEncuestas.get(0)).getPid();
-            }
+            List targetEncuestas = new ArrayList();
+            BasicNavigator navbar = (BasicNavigator)context.getNavigator();
+            int selectionServicio = 0;
+            loop: while (controlPantallas){
+               switch(state) {
+               case 0:
+                  Activator.getLog().info("case 0:::");
+                  navbar.showBackButton(false);
+                  String[] namesAsArray = (String[]) namesServicios.toArray(new String[0]);
+                  ComboPrompt cpServicio = (ComboPrompt) context.getPromptFactory()
+                        .newPrompt(ComboPrompt.ID);
+                  cpServicio.setItems(namesAsArray);
+                  cpServicio.setLabel("Seleccione el Servicio a encuestar.");
+                  cpServicio.setSelection(0);
+                  context.displayPrompt(cpServicio);
+                  selectionServicio = cpServicio.getSelection();
+                  navbar.showBackButton(true);
+               case 1:
+                  Activator.getLog().info("case 1:::");
+                  Servicio servicioSeleccionado = (Servicio) cbServicios.get(selectionServicio);
+                  targetEncuestas = servicioSeleccionado.getEncuestas();
+                  selectedPid = "";
+                  if (targetEncuestas.size() > 1)
+                  {
+                     //todo en base a el servicio seleccionado
+                     Collections.sort(targetEncuestas, new ComparatorEncuesta());
+                     ArrayList namesEncuestas = new ArrayList();
+                     ArrayList pidsEncuestas = new ArrayList();
+                     for (int j = 0; j < targetEncuestas.size(); j++)
+                     {
+                        Encuesta encuesta = (Encuesta) targetEncuestas.get(j);
+                        namesEncuestas.add(encuesta.getNombre());
+                        pidsEncuestas.add(encuesta.getPid());
+                     }
+                     
+                     namesAsArray = (String[]) namesEncuestas.toArray(new String[0]);
+                     ComboPrompt cpEncuesta = (ComboPrompt) context.getPromptFactory()
+                           .newPrompt(ComboPrompt.ID);
+                     cpEncuesta = (ComboPrompt) context.getPromptFactory()
+                           .newPrompt(ComboPrompt.ID);
+                     cpEncuesta.setItems(namesAsArray);
+                     cpEncuesta.setLabel("Seleccione la encuesta a realizar.");
+                     cpEncuesta.setSelection(0);
+                     context.displayPrompt(cpEncuesta);
+                     Activator.getLog().info(
+                           "dismiis button::: " + cpEncuesta.getDismissButton());
+                     if ("back".equals(cpEncuesta.getDismissButton()))
+                     {
+                        state = 0;
+                        break;
+                     }
+                     
+                     int selectionEncuesta = cpEncuesta.getSelection();
+                     selectedPid = (String) pidsEncuestas.get(selectionEncuesta);
+                  } 
+                  else
+                  {
+                     selectedPid = ((Encuesta) targetEncuestas.get(0)).getPid();
+                  }
+               case 2:
+                  Activator.getLog().info("case 2:::");
+                  SettingDefinitionMap instance = instances
+                     .getInstance(selectedPid);
+                  filename = (String) instance.get("settings.log.promptName")
+                        .getCurrentValue();
+      
+                  Encuesta encuesta = getEncuesta(selectedPid, targetEncuestas);
+                  lineLog.getEncabezado().add("Equipo");
+                  lineLog.getEncabezado().add("Fecha"); 
+                  List preguntas = encuesta.getPreguntas();
+                  lineLog = new Log();
+                  String ip = characteristicsService.get("serialNumber");
+                  SimpleDateFormat fecha = new SimpleDateFormat(
+                        "dd/MM/yyyy HH:mm");
+                  lineLog.setSerial(ip);
+                  lineLog.setDate(fecha.format(new Date()));
+                  boolean returnServicioEncuesta = false;
+                  
+                  for (int k = 0; k < preguntas.size(); k++)
+                  {
+                     returnServicioEncuesta = false;
+                     Pregunta pregunta = (Pregunta) preguntas.get(k);
+                     Activator.getLog()
+                           .info("Pregunta::: " + pregunta.getPregunta());
+                     lineLog.getEncabezado().add(pregunta.getPregunta());
+                     List opciones = pregunta.getOpciones();
+      
+                     if ("omur".equals(pregunta.getTipo()))
+                     {
+                        OmurPrompt omurPromt = new OmurPrompt(
+                              String.valueOf(pregunta.getId()),
+                              pregunta.getPregunta(), opciones);
+                        context.displayPrompt(omurPromt);
+                        Activator.getLog().info(
+                              "dismiis button::: " + omurPromt.getDismissButton());
+                        if ("cancel".equals(omurPromt.getDismissButton()))
+                        {
+                           throw new PromptException(
+                                 PromptException.PROMPT_CANCELLED_BY_USER);
+                        }else if ("back".equals(omurPromt.getDismissButton())){
+                           Activator.getLog().info("pregunta:::" + k);
+                           if (k - 1 < 0){
+                              Activator.getLog().info("devuelve antes encuesta:::");
+                              if (targetEncuestas.size() > 1){
+                                 state = 1;
+                              }else{
+                                 state = 0;
+                              }
+                              returnServicioEncuesta = true;
+                              break;
+                           }else{
+                              Activator.getLog().info("remueve ultima respuesta:::");
+                              removeUltimaRespuesta(lineLog);
+                              k = k - 2;
+                              continue;
+                           }
+                        }else{
+                           lineLog.getRespuestas().add(omurPromt.getRespuesta());
+                           Activator.getLog().info(
+                                 "omur respuesta::: " + omurPromt.getRespuesta());                           
+                        }
+                     }
+                     else if ("ommr".equals(pregunta.getTipo()))
+                     {
+                        OmmrPrompt ommrPromt = new OmmrPrompt(
+                              String.valueOf(pregunta.getId()),
+                              pregunta.getPregunta(), opciones);
+                        context.displayPrompt(ommrPromt);
+                        Activator.getLog().info(
+                              "dismiis button::: " + ommrPromt.getDismissButton());
+                        if ("cancel".equals(ommrPromt.getDismissButton()))
+                        {
+                           throw new PromptException(
+                                 PromptException.PROMPT_CANCELLED_BY_USER);
+                        }else if ("back".equals(ommrPromt.getDismissButton())){
+                           Activator.getLog().info("pregunta:::" + k);
+                           if (k - 1 < 0){
+                              Activator.getLog().info("devuelve antes encuesta:::");
+                              if (targetEncuestas.size() > 1){
+                                 state = 1;
+                              }else{
+                                 state = 0;
+                              }
+                              returnServicioEncuesta = true;
+                              break;
+                           }else{
+                              Activator.getLog().info("remueve ultima respuesta:::");
+                              removeUltimaRespuesta(lineLog);
+                              k = k - 2;
+                              continue;
+                           }
+                        }else{
+                           lineLog.getRespuestas().add(ommrPromt.getRespuesta());
+                           Activator.getLog().info(
+                                 "ommr respuesta::: " + ommrPromt.getRespuesta());
+                        }
+                     }
+                     else if ("texto".equals(pregunta.getTipo()))
+                     {
+                        StringPrompt texto = (StringPrompt) context
+                              .getPromptFactory().newPrompt(StringPrompt.ID);
+                        texto.setName("texto");
+                        texto.setLabel(pregunta.getPregunta());
+                        texto.setMinLength(5);
+                        context.displayPrompt(texto);
+                        if ("back".equals(texto.getDismissButton()))
+                        {
+                           Activator.getLog().info("pregunta:::" + k);
+                           if (k - 1 < 0){
+                              Activator.getLog().info("devuelve antes encuesta:::");
+                              if (targetEncuestas.size() > 1){
+                                 state = 1;
+                              }else{
+                                 state = 0;
+                              }
+                              returnServicioEncuesta = true;
+                              break;
+                           }else{
+                              Activator.getLog().info("remueve ultima respuesta:::");
+                              removeUltimaRespuesta(lineLog);
+                              k = k - 2;
+                              continue;
+                           }
+                        }else{
+                           lineLog.getRespuestas().add(texto.getValue().replace(',', ' '));   
+                        }
+                     }
+                     else if ("like".equals(pregunta.getTipo()))
+                     {
+                        LikePrompt likePromt = new LikePrompt(String.valueOf(pregunta.getId()),
+                              pregunta.getPregunta());
+                        context.displayPrompt(likePromt);
+                        Activator.getLog().info(
+                              "dismiis button::: " + likePromt.getDismissButton());
+                        if ("cancel".equals(likePromt.getDismissButton()))
+                        {
+                           throw new PromptException(
+                                 PromptException.PROMPT_CANCELLED_BY_USER);
+                        }else if ("back".equals(likePromt.getDismissButton())){
+                           Activator.getLog().info("pregunta:::" + k);
+                           if (k - 1 < 0){
+                              Activator.getLog().info("devuelve antes encuesta:::");
+                              if (targetEncuestas.size() > 1){
+                                 state = 1;
+                              }else{
+                                 state = 0;
+                              }
+                              returnServicioEncuesta = true;
+                              break;
+                           }else{
+                              Activator.getLog().info("remueve ultima respuesta:::");
+                              removeUltimaRespuesta(lineLog);
+                              k = k - 2;
+                              continue;
+                           }
+                        }else{
+                           lineLog.getRespuestas().add(likePromt.getRespuesta());
+                           Activator.getLog().info(
+                                 "like respuesta::: " + likePromt.getRespuesta());   
+                        }
+                     }
+                     else if ("numerico".equals(pregunta.getTipo()))
+                     {
+                        IntegerPrompt integer = (IntegerPrompt) context
+                              .getPromptFactory().newPrompt(IntegerPrompt.ID);
+                        integer.setName("Numerico");
+                        integer.setLabel(pregunta.getPregunta());
+                        integer.setMinValue(Long.parseLong(pregunta.getMinimo()));
+                        integer.setMaxValue(Long.parseLong(pregunta.getMaximo()));
+                        context.displayPrompt(integer);
+                        if ("back".equals(integer.getDismissButton()))
+                        {
+                           Activator.getLog().info("pregunta:::" + k);
+                           if (k - 1 < 0){
+                              Activator.getLog().info("devuelve antes encuesta:::");
+                              if (targetEncuestas.size() > 1){
+                                 state = 1;
+                              }else{
+                                 state = 0;
+                              }
+                              returnServicioEncuesta = true;
+                              break;
+                           }else{
+                              Activator.getLog().info("remueve ultima respuesta:::");
+                              removeUltimaRespuesta(lineLog);
+                              k = k - 2;
+                              continue;
+                           }
+                        }else{
+                           lineLog.getRespuestas().add(String.valueOf(integer.getValue()));   
+                        }
+                     }
+                     else
+                     {
+                     }
+                  }//end for preguntas
+                  if (returnServicioEncuesta){
+                     break;
+                  }
+               default:
+                  break loop; 
+               }//end switch
+            }//end loop
            
-            SettingDefinitionMap instance = instances
-                  .getInstance(selectedPid);
-            filename = (String) instance.get("settings.log.promptName")
-                  .getCurrentValue();
-
-            Encuesta encuesta = getEncuesta(selectedPid, targetEncuestas);
-            encabezado = new StringBuffer();
-            encabezado.append("Equipo, Fecha, ");
-            List preguntas = encuesta.getPreguntas();
-            respuestas = new StringBuffer();
-            String ip = characteristicsService.get("serialNumber");
-            SimpleDateFormat fecha = new SimpleDateFormat(
-                  "dd/MM/yyyy HH:mm");
-            respuestas.append(ip + "," + fecha.format(new Date()) + ",");
-
-            for (int k = 0; k < preguntas.size(); k++)
-            {
-               Pregunta pregunta = (Pregunta) preguntas.get(k);
-               Activator.getLog()
-                     .info("Pregunta::: " + pregunta.getPregunta());
-               encabezado.append(pregunta.getPregunta());
-               List opciones = pregunta.getOpciones();
-
-               if ("omur".equals(pregunta.getTipo()))
-               {
-                  OmurPrompt omurPromt = new OmurPrompt(
-                        String.valueOf(pregunta.getId()),
-                        pregunta.getPregunta(), opciones);
-                  context.displayPrompt(omurPromt);
-                  Activator.getLog().info(
-                        "dismiis button::: " + omurPromt.getDismissButton());
-                  if ("cancel".equals(omurPromt.getDismissButton()))
-                  {
-                     throw new PromptException(
-                           PromptException.PROMPT_CANCELLED_BY_USER);
-                  }
-                  respuestas.append(omurPromt.getRespuesta());
-                  Activator.getLog().info(
-                        "omur respuesta::: " + omurPromt.getRespuesta());
-               }
-               else if ("ommr".equals(pregunta.getTipo()))
-               {
-                  OmmrPrompt ommrPromt = new OmmrPrompt(
-                        String.valueOf(pregunta.getId()),
-                        pregunta.getPregunta(), opciones);
-                  context.displayPrompt(ommrPromt);
-                  Activator.getLog().info(
-                        "dismiis button::: " + ommrPromt.getDismissButton());
-                  if ("cancel".equals(ommrPromt.getDismissButton()))
-                  {
-                     throw new PromptException(
-                           PromptException.PROMPT_CANCELLED_BY_USER);
-                  }
-                  respuestas.append(ommrPromt.getRespuesta());
-                  Activator.getLog().info(
-                        "ommr respuesta::: " + ommrPromt.getRespuesta());
-               }
-               else if ("texto".equals(pregunta.getTipo()))
-               {
-                  StringPrompt texto = (StringPrompt) context
-                        .getPromptFactory().newPrompt(StringPrompt.ID);
-                  texto.setName("texto");
-                  texto.setLabel(pregunta.getPregunta());
-                  texto.setMinLength(5);
-                  context.displayPrompt(texto);
-                  respuestas.append(texto.getValue().replace(',', ' '));
-               }
-               else if ("like".equals(pregunta.getTipo()))
-               {
-                  LikePrompt likePromt = new LikePrompt(String.valueOf(pregunta.getId()),
-                        pregunta.getPregunta());
-                  context.displayPrompt(likePromt);
-                  Activator.getLog().info(
-                        "dismiis button::: " + likePromt.getDismissButton());
-                  if ("cancel".equals(likePromt.getDismissButton()))
-                  {
-                     throw new PromptException(
-                           PromptException.PROMPT_CANCELLED_BY_USER);
-                  }
-                  respuestas.append(likePromt.getRespuesta());
-                  Activator.getLog().info(
-                        "like respuesta::: " + likePromt.getRespuesta());
-               }
-               else if ("numerico".equals(pregunta.getTipo()))
-               {
-                  IntegerPrompt integer = (IntegerPrompt) context
-                        .getPromptFactory().newPrompt(IntegerPrompt.ID);
-                  integer.setName("Numerico");
-                  integer.setLabel(pregunta.getPregunta());
-                  integer.setMinValue(Long.parseLong(pregunta.getMinimo()));
-                  integer.setMaxValue(Long.parseLong(pregunta.getMaximo()));
-                  context.displayPrompt(integer);
-                  respuestas.append(String.valueOf(integer.getValue()));
-               }
-               else
-               {
-               }
-
-               if (k < (preguntas.size() - 1))
-               {
-                  respuestas.append(",");
-                  encabezado.append(",");
-               }
-            }
-            Activator.getLog().info("Respuestas:: " + respuestas.toString());
-
+            
             SettingDefinitionMap ourAppSettings = settingsAdmin
                   .getGlobalSettings("survey2");
+            String logCharacter = (String) ourAppSettings
+                  .get("settings.log.caracter").getCurrentValue();
+            lineLog.setSeparator(logCharacter);
             String shareName = (String) ourAppSettings
                   .get("settings.log.shareName").getCurrentValue();
             String serverAddress = (String) ourAppSettings
@@ -353,11 +475,11 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
             {
                Activator.getLog().info("antes de escribir el log");
                Activator.getLog()
-                     .info("Log a escribir::: " + respuestas.toString());
+                     .info("Log a escribir::: " + lineLog.toString());
                clientLog = smbClientService
                      .getNewSmbClient(configBuilder.build());
                WriteLog wl = new WriteLog(clientLog, Activator.getLog(),
-                     filename, respuestas.toString(), encabezado.toString());
+                     filename, lineLog.toString(), lineLog.toStringEncabezado());
                wl.start();
             }
             catch (com.lexmark.prtapp.smbclient.ConfigurationException e)
@@ -371,7 +493,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                e.printStackTrace();
             }
             Activator.getLog().info("fin escribir log");
-
+            navbar.showBackButton(false);
             Messages message = new Messages("Resources", context.getLocale(),
                   getClass().getClassLoader());
             String label = message.getString(
@@ -423,6 +545,13 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
          Activator.getLog().debug("Exception thrown", e);
       }
 
+   }
+
+   private void removeUltimaRespuesta(Log lineLog)
+   {
+      int size = lineLog.getRespuestas().size();
+      lineLog.getRespuestas().remove(size-1);
+      
    }
 
    private List resolveEncuestasByServicios(Set servicios, List encuestas)
