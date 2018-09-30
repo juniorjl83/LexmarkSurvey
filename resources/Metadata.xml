@@ -20,6 +20,9 @@
 			service="com.lexmark.prtapp.newcharacteristics.DeviceCharacteristicsService"
 			filter="" cardinality="1..1" policy="dynamic" bind-method="addDeviceCharacteristics"
 			unbind-method="removeDeviceCharacteristics" />
+		<requires service="com.lexmark.prtapp.email.EmailService" 
+			filter="" cardinality="1..1" policy="dynamic" bind-method="addEmailService"
+            unbind-method="removeEmailService" />
 		<provides service="org.osgi.service.cm.ManagedService" />
 		<provides service="com.lexmark.prtapp.settings.RequiredSettingValidator" />
 	</component>

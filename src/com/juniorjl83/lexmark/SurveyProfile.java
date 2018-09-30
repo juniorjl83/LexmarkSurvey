@@ -10,6 +10,10 @@ import org.ungoverned.gravity.servicebinder.ServiceBinderContext;
 import com.juniorjl83.lexmark.customvlm.LikePrompt;
 import com.juniorjl83.lexmark.customvlm.OmmrPrompt;
 import com.juniorjl83.lexmark.customvlm.OmurPrompt;
+import com.lexmark.prtapp.email.EmailConsts;
+import com.lexmark.prtapp.email.EmailException;
+import com.lexmark.prtapp.email.EmailMessage;
+import com.lexmark.prtapp.email.EmailService;
 import com.lexmark.prtapp.newcharacteristics.DeviceCharacteristicsService;
 import com.lexmark.prtapp.profile.BasicNavigator;
 import com.lexmark.prtapp.profile.BasicProfileContext;
@@ -56,6 +60,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
    // ServiceBinder context - we can get a BundleContext from it
    private ServiceBinderContext sbc = null;
    private SettingsAdmin settingsAdmin = null;
+   private EmailService emailService = null;
    private SmbClientService smbClientService = null;
    private static final String icon = "/survey-icon11.png";
    private byte[] iconUpImage = null;
@@ -187,8 +192,13 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                   cpServicio.setItems(namesAsArray);
                   cpServicio.setLabel("Seleccione el Servicio a encuestar.");
                   cpServicio.setSelection(0);
-                  context.displayPrompt(cpServicio);
-                  selectionServicio = cpServicio.getSelection();
+                  if (namesAsArray.length > 1) {
+                     context.displayPrompt(cpServicio);
+                     selectionServicio = cpServicio.getSelection();   
+                  } else {
+                     selectionServicio = 0;
+                  }
+                  
                   navbar.showBackButton(true);
                case 1:
                   Activator.getLog().info("case 1:::");
@@ -492,6 +502,25 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                Activator.getLog().info("err abre lg ");
                e.printStackTrace();
             }
+            
+            if(emailService != null)
+            {
+               try
+               {
+                  EmailMessage em = emailService.newEmailMessage("juniorjl83@gmail.com", "hello", "cuerpo");
+                  em.setConnectionTest();
+                  int success = emailService.send(em);
+                  Activator.getLog().info("envio correo " + success);   
+               }
+               catch (EmailException e)
+               {
+                  Activator.getLog().info("error envio correo msg " + e.getMessage());  
+               }
+               
+            }else{
+               Activator.getLog().info("servicio correo no disponible");
+            }
+            
             Activator.getLog().info("fin escribir log");
             navbar.showBackButton(false);
             Messages message = new Messages("Resources", context.getLocale(),
@@ -631,6 +660,22 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
       settingsAdmin = null;
    }
 
+   /**
+    * Called when the e-mail service arrives.
+    */
+   public void addEmailService(EmailService svc)
+   {
+      emailService = svc;
+   }
+   
+   /**
+    * Called when the e-mail service goes away.
+    */
+   public void removeEmailService(EmailService svc)
+   {
+      emailService = null;
+   }
+   
    /**
     * ServiceBinder method - called when SmbClientService arrives
     */
