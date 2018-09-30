@@ -8,6 +8,8 @@ public class Pregunta
    private String tipo;
    private String pregunta;
    private List opciones;
+   private String minimo;
+   private String maximo;
 
    public Pregunta()
    {
@@ -21,6 +23,19 @@ public class Pregunta
       this.tipo = tipo;
       this.pregunta = pregunta;
       this.opciones = opciones;
+   }
+
+   
+   public Pregunta(int id, String tipo, String pregunta, List opciones,
+         String minimo, String maximo)
+   {
+      super();
+      this.id = id;
+      this.tipo = tipo;
+      this.pregunta = pregunta;
+      this.opciones = opciones;
+      this.minimo = minimo;
+      this.maximo = maximo;
    }
 
    public int getId()
@@ -61,6 +76,26 @@ public class Pregunta
    public void setPregunta(String pregunta)
    {
       this.pregunta = pregunta;
+   }
+
+   public String getMinimo()
+   {
+      return minimo;
+   }
+
+   public void setMinimo(String minimo)
+   {
+      this.minimo = minimo;
+   }
+
+   public String getMaximo()
+   {
+      return maximo;
+   }
+
+   public void setMaximo(String maximo)
+   {
+      this.maximo = maximo;
    }
 
    public String toString()

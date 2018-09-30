@@ -126,21 +126,34 @@ public class LikePrompt implements VlmlPrompt
       screen.append(" <AttachChild bottom=\"3\" top=\"2\" right=\"1\" left=\"0\" yPadding=\"0\" xPadding=\"0\" yGFill=\"fill\" xGFill=\"expandFill\">\n");
       screen.append("     <Image name=\"separatorLine\" imageName=\"NavRowBottomLine\"/>\n");
       screen.append(" </AttachChild>\n");
+      
       screen.append(" <AttachChild bottom=\"4\" top=\"3\" right=\"1\" left=\"0\" yGFill=\"fill\" xGFill=\"expandFill\">\n");
+      
       screen.append("     <BoxLayout name=\"navBar\" orientation=\"horizontal\" color=\"b2b2b2\">\n");
+      
       screen.append("         <AttachChildToTheEnd fill=\"shrink\">\n");
       screen.append("             <LabeledImageButton name=\"next\" overlayStyle=\"bold\" overlayPointSize=\"16\">\n");
       screen.append("                 <Normal text=\"Siguiente\" imageName=\"navRowOptionsUp\"/>\n");
       screen.append("                 <Selected text=\"Siguiente\" imageName=\"navRowOptionsDown\"/>\n");
       screen.append("             </LabeledImageButton>\n");
       screen.append("         </AttachChildToTheEnd>\n");
+      
+      screen.append("         <AttachChildToTheEnd fill=\"shrink\">\n");
+      screen.append("             <LabeledImageButton name=\"back\" overlayStyle=\"bold\" overlayPointSize=\"16\">\n");
+      screen.append("                 <Normal text=\"Atrás\" imageName=\"navRowOptionsUp\"/>\n");
+      screen.append("                 <Selected text=\"Atrás\" imageName=\"navRowOptionsDown\"/>\n");
+      screen.append("             </LabeledImageButton>\n");
+      screen.append("         </AttachChildToTheEnd>\n");
+      
       screen.append("         <AttachChildToTheEnd fill=\"shrink\">\n");
       screen.append("             <LabeledImageButton name=\"cancel\">\n");
       screen.append("                 <Normal imageName=\"homeUp\"/>\n");
       screen.append("                 <Selected imageName=\"homeDown\"/>\n");
       screen.append("             </LabeledImageButton>\n");
       screen.append("         </AttachChildToTheEnd>\n");
+      
       screen.append("     </BoxLayout>\n");
+      
       screen.append(" </AttachChild>\n");
       screen.append("</GridLayout>\n");
       
@@ -162,6 +175,10 @@ public class LikePrompt implements VlmlPrompt
          }else{
             result = PromptEventResult.CONTINUE;
          }
+      }else if ( component.equals("like.navBar.back") ){
+         Activator.getLog().info("entra a back");
+         dismissButton = "back";
+         result = PromptEventResult.VALIDATE;
       }else if (component.equals("like.navBar.cancel")){
          Activator.getLog().info("entra a cancel");
          dismissButton = "cancel";

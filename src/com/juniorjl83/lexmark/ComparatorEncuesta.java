@@ -1,6 +1,6 @@
 package com.juniorjl83.lexmark;
 
-public class Comparator implements java.util.Comparator
+public class ComparatorEncuesta implements java.util.Comparator
 {
 
    public int compare(Object o1, Object o2)

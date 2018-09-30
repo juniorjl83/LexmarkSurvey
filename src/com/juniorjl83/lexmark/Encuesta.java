@@ -7,6 +7,7 @@ public class Encuesta
 {
    private String pid;
    private String nombre;
+   private String servicio;
    private Date fechaInicio;
    private Date fechaFin;
    private List preguntas;
@@ -74,6 +75,16 @@ public class Encuesta
    public void setPid(String pid)
    {
       this.pid = pid;
+   }
+   
+   public String getServicio()
+   {
+      return servicio;
+   }
+
+   public void setServicio(String servicio)
+   {
+      this.servicio = servicio;
    }
 
    public String toString()
