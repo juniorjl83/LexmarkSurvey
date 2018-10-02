@@ -41,6 +41,15 @@
 			<description value="settings.log.subject.description" />
 			<length min="1" max="1000" />
 		</element>
+		<element name="msg.title.seleccione.encuesta" type="String">
+			<default value="Seleccione la encuesta a realizar." />
+			<length min="1" max="1000" />
+		</element>
+		<element name="msg.title.muchas.gracias" type="String">
+			<default value="Muchas gracias por ayudarnos a mejorar nuestro servicio." />
+			<length min="1" max="1000" />
+		</element>
+				
 		<element name="settings.network.user" type="String">
 			<description value="settings.network.user.description" />
 			<length min="1" max="30" />

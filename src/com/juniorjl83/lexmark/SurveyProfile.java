@@ -181,6 +181,8 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
             List targetEncuestas = new ArrayList();
             BasicNavigator navbar = (BasicNavigator)context.getNavigator();
             int selectionServicio = 0;
+            SettingDefinitionMap ourAppSettings = settingsAdmin
+                  .getGlobalSettings("survey2");
             loop: while (controlPantallas){
                switch(state) {
                case 0:
@@ -224,7 +226,11 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                      cpEncuesta = (ComboPrompt) context.getPromptFactory()
                            .newPrompt(ComboPrompt.ID);
                      cpEncuesta.setItems(namesAsArray);
-                     cpEncuesta.setLabel("Seleccione la encuesta a realizar.");
+                     
+                     String seleeccioneEncuesta = (String) ourAppSettings.get("msg.title.seleccione.encuesta")
+                           .getCurrentValue();
+                     
+                     cpEncuesta.setLabel(seleeccioneEncuesta);
                      cpEncuesta.setSelection(0);
                      context.displayPrompt(cpEncuesta);
                      Activator.getLog().info(
@@ -447,9 +453,6 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                }//end switch
             }//end loop
            
-            
-            SettingDefinitionMap ourAppSettings = settingsAdmin
-                  .getGlobalSettings("survey2");
             String logCharacter = (String) ourAppSettings
                   .get("settings.log.caracter").getCurrentValue();
             lineLog.setSeparator(logCharacter);
@@ -494,7 +497,7 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                      filename, lineLog.toString(), lineLog.toStringEncabezado());
                wl.start();
                
-               if(emailService != null && email.isEmpty())
+               if(emailService != null && email.length() > 0)
                {
                   try
                   {
@@ -531,8 +534,8 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
             navbar.showBackButton(false);
             Messages message = new Messages("Resources", context.getLocale(),
                   getClass().getClassLoader());
-            String label = message.getString(
-                  "Muchas gracias por ayudarnos a mejorar nuestro servicio.");
+            String label = (String) ourAppSettings.get("msg.title.muchas.gracias")
+                  .getCurrentValue();
             mp1 = (MessagePrompt) pf.newPrompt(MessagePrompt.ID);
             mp1.setLabel(label);
             context.displayPrompt(mp1);
@@ -698,20 +701,6 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
       smbClientService = null;
    }
 
-   /*
-    * public void addSurveyProfileService(SurveyProfileService service) {
-    * _surveyprofileservice = service;
-    * 
-    * }
-    * 
-    * public void removeSurveyProfileService(SurveyProfileService service) { //
-    * This service just went away, we shouldn't rely on any // of its methods
-    * still being valid.
-    * 
-    * _surveyprofileservice = null;
-    * 
-    * }
-    */
    public boolean validate(String pid, Dictionary settings, Locale locale,
          SettingsStatus status)
    {
