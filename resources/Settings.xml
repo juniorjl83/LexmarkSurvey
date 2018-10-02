@@ -33,6 +33,14 @@
 			<default value="|" />
 			<length min="1" max="1" />
 		</element>
+		<element name="settings.log.email" type="String">
+			<description value="settings.log.email.description" />
+			<length min="1" max="1000" />
+		</element>
+		<element name="settings.log.subject" type="String">
+			<description value="settings.log.subject.description" />
+			<length min="1" max="1000" />
+		</element>
 		<element name="settings.network.user" type="String">
 			<description value="settings.network.user.description" />
 			<length min="1" max="30" />
@@ -64,6 +72,13 @@
 				<settingref name="settings.log.path" />
 				<settingref name="settings.log.domain" />
 				<settingref name="settings.log.caracter" />
+				<settingref name="settings.log.email" />
+				<settingref name="settings.log.subject" />
+			</group>
+			<group title="msg.title">
+				<description value="msg.title.description" />
+				<settingref name="msg.title.seleccione.encuesta" />
+				<settingref name="msg.title.muchas.gracias" />
 			</group>
 		</layout>
 	</global>

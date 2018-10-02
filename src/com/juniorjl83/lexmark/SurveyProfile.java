@@ -465,7 +465,9 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                   .get("settings.network.user").getCurrentValue();
             String password = (String) ourAppSettings
                   .get("settings.network.password").getCurrentValue();
-
+            String email = (String) ourAppSettings.get("settings.log.email")
+                  .getCurrentValue();
+            
             ConfigBuilder configBuilder = smbClientService
                   .getSmbConfigBuilder();
             configBuilder.setAuthType(AuthOptions.NTLMv2);
@@ -491,6 +493,28 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                WriteLog wl = new WriteLog(clientLog, Activator.getLog(),
                      filename, lineLog.toString(), lineLog.toStringEncabezado());
                wl.start();
+               
+               if(emailService != null && email.isEmpty())
+               {
+                  try
+                  {
+                     String asunto = (String) ourAppSettings.get("settings.log.subject")
+                           .getCurrentValue();
+                     Activator.getLog().info("email: " + email);   
+                     Activator.getLog().info("asunto: " + asunto);
+                     EmailMessage em = emailService.newEmailMessage(email, asunto, lineLog.toString());
+                     em.setConnectionTest();
+                     int success = emailService.send(em);
+                     Activator.getLog().info("envio correo " + success);   
+                  }
+                  catch (EmailException e)
+                  {
+                     Activator.getLog().info("error envio correo msg " + e.getMessage());  
+                  }
+                  
+               }else{
+                  Activator.getLog().info("servicio correo no disponible");
+               }
             }
             catch (com.lexmark.prtapp.smbclient.ConfigurationException e)
             {
@@ -501,24 +525,6 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
             {
                Activator.getLog().info("err abre lg ");
                e.printStackTrace();
-            }
-            
-            if(emailService != null)
-            {
-               try
-               {
-                  EmailMessage em = emailService.newEmailMessage("juniorjl83@gmail.com", "hello", "cuerpo");
-                  em.setConnectionTest();
-                  int success = emailService.send(em);
-                  Activator.getLog().info("envio correo " + success);   
-               }
-               catch (EmailException e)
-               {
-                  Activator.getLog().info("error envio correo msg " + e.getMessage());  
-               }
-               
-            }else{
-               Activator.getLog().info("servicio correo no disponible");
             }
             
             Activator.getLog().info("fin escribir log");
