@@ -69,8 +69,6 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
    private ServiceRegistration profileRegistration = null;
    private static final String CARRIAGE_RETURN = System
          .getProperty("line.separator");
-   private boolean isValidLog = false;
-   private boolean isValidPreguntas = false;
    private DeviceCharacteristicsService characteristicsService = null;
    // private SurveyProfileService _surveyprofileservice = null;
 
@@ -118,7 +116,9 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
 
       try
       {
-         if (isValidLog && isValidPreguntas)
+         boolean validacionInicial = true;
+         
+         if (validacionInicial)
          {
             Activator.getLog().info("validacion exitosa");
             SettingsGroup instances = settingsAdmin
@@ -710,7 +710,6 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
       // entra a configurar encuestas
       if (!pid.equals("survey2"))
       {
-         isValidPreguntas = false;
          boolean isError = false;
          boolean isValidBeginDate = false;
          boolean isValidEndDate = false;
@@ -797,11 +796,9 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                   SettingsStatus.STATUS_TYPE_ERROR);
             return false;
          }
-         isValidPreguntas = true;
       }
       else
       {
-         isValidLog = false;
          Activator.getLog().info("Pid padre");
          ArrayList lstServer = new ArrayList();
 
@@ -843,7 +840,6 @@ public class SurveyProfile implements PrtappProfile, WelcomeScreenable,
                return false;
             }
          }
-         isValidLog = true;
       }
       return true;
    }
